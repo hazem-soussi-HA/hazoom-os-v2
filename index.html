@@ -175,6 +175,8 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Inter',sans-serif;
 .br-url{flex:1;height:28px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0 10px;color:var(--text);font-size:11px;font-family:'JetBrains Mono',monospace;outline:none;transition:border-color .2s}
 .br-url:focus{border-color:var(--accent)}
 .br-frame{flex:1;background:#fff;border:none}
+.br-content{flex:1;overflow:auto;background:#fff;padding:0}
+.br-content base{display:none}
 .br-bookmarks{display:flex;gap:4px;padding:4px 8px;background:rgba(0,0,0,.08);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
 .br-bookmarks::-webkit-scrollbar{display:none}
 .br-bm{height:24px;padding:0 10px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);color:var(--text2);font-size:9px;font-family:'Inter',sans-serif;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;transition:all .15s}
@@ -2057,6 +2059,8 @@ function renderCalculator(body, statusEl, winId) {
 }
 
 function renderBrowser(body, statusEl, winId) {
+  let brHistory = [], brHistoryIdx = -1, brLoading = false;
+
   function renderTabs() {
     const tabsEl = document.getElementById("brTabs-" + winId);
     if (!tabsEl) return;
@@ -2076,8 +2080,8 @@ function renderBrowser(body, statusEl, winId) {
     </div>`;
   }
 
-  function renderFrame(url) {
-    return `<iframe class="br-frame" id="brFrame-${winId}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" src="${url}"></iframe>`;
+  function renderContent(html) {
+    return `<div class="br-content" id="brContent-${winId}" style="flex:1;overflow:auto;background:#fff">${html}</div>`;
   }
 
   const tab = browserTabs.find(t => t.id === browserTabId);
@@ -2093,36 +2097,93 @@ function renderBrowser(body, statusEl, winId) {
       <button class="br-nav" id="brHomeBtn-${winId}" title="Home">⌂</button>
       <span class="br-ssl ${isHome ? 'secure' : ''}" id="brSsl-${winId}">${isHome ? '🔒' : ''}</span>
       <input class="br-url" id="brUrl-${winId}" value="${isHome ? '' : (tab?.url || '')}">
+      <span class="br-ssl" id="brStatus-${winId}" style="font-size:9px;width:auto"></span>
     </div>
-    ${isHome ? renderHome() : renderFrame(BRAI.proxyUrl(tab.url))}
+    ${isHome ? renderHome() : renderContent('<div class="br-news-loading">Loading...</div>')}
   </div>`;
 
-  function setUrl(url, skipFrame) {
-    if (url === 'home') {
-      const t = browserTabs.find(x => x.id === browserTabId);
-      if (t) { t.url = 'home'; t.title = '🏠 Home'; }
-      renderTabs();
-      body.querySelector('.br').innerHTML = `<div class="br-tabs" id="brTabs-${winId}"></div>${renderBookmarks()}<div class="br-toolbar"><button class="br-nav" id="brBack-${winId}">◀</button><button class="br-nav" id="brFwd-${winId}">▶</button><button class="br-nav" id="brReload-${winId}">⟳</button><button class="br-nav" id="brHomeBtn-${winId}" title="Home">⌂</button><span class="br-ssl secure" id="brSsl-${winId}">🔒</span><input class="br-url" id="brUrl-${winId}" value=""></div>${renderHome()}`;
-      renderTabs();
-      bindEvents();
-      loadNews();
-      statusEl.textContent = '🌐 Home';
-      return;
+  async function fetchAndRender(url) {
+    const contentEl = document.getElementById("brContent-" + winId);
+    const statusIcon = document.getElementById("brStatus-" + winId);
+    if (!contentEl) return;
+    brLoading = true;
+    if (statusIcon) statusIcon.textContent = '⏳';
+    try {
+      const proxyUrl = BRAI.proxyUrl(url);
+      const res = await fetch(proxyUrl);
+      const contentType = res.headers.get('content-type') || '';
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const html = await res.text();
+      contentEl.innerHTML = `<base href="${new URL(url).origin}/" target="_blank">` + html;
+      // Rewrite all links to go through proxy
+      contentEl.querySelectorAll('a[href]').forEach(a => {
+        const href = a.getAttribute('href');
+        if (href && (href.startsWith('http') || href.startsWith('/'))) {
+          const fullUrl = href.startsWith('http') ? href : new URL(href, url).href;
+          a.setAttribute('href', 'javascript:void(0)');
+          a.addEventListener('click', ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            navigateTo(fullUrl);
+          });
+        }
+      });
+      contentEl.querySelectorAll('form[action]').forEach(f => {
+        const action = f.getAttribute('action');
+        if (action) {
+          const fullUrl = action.startsWith('http') ? action : new URL(action, url).href;
+          f.setAttribute('action', 'javascript:void(0)');
+        }
+      });
+      if (statusIcon) statusIcon.textContent = '✓';
+      setTimeout(() => { if (statusIcon) statusIcon.textContent = ''; }, 2000);
+    } catch(e) {
+      contentEl.innerHTML = `<div style="padding:40px;text-align:center;font-family:Inter,sans-serif">
+        <div style="font-size:48px;margin-bottom:16px">⚠️</div>
+        <div style="font-size:16px;font-weight:600;color:#333;margin-bottom:8px">Page Load Failed</div>
+        <div style="font-size:12px;color:#666;margin-bottom:16px">${e.message}</div>
+        <div style="font-size:11px;color:#999">URL: ${url}</div>
+        <button onclick="this.closest('.br-content').parentElement.querySelector('#brHomeBtn-${winId}').click()" style="margin-top:16px;padding:8px 20px;border-radius:8px;border:none;background:#6c5ce7;color:#fff;cursor:pointer">Go Home</button>
+      </div>`;
+      if (statusIcon) statusIcon.textContent = '❌';
     }
+    brLoading = false;
+  }
+
+  function navigateTo(url) {
+    if (url === 'home') { goHome(); return; }
     if (!url.startsWith("http")) url = "https://" + url;
-    const proxyUrl = BRAI.proxyUrl(url);
-    const frame = document.getElementById("brFrame-" + winId);
-    if (frame && !skipFrame) frame.src = proxyUrl;
     const t = browserTabs.find(x => x.id === browserTabId);
-    let hostname = '';
-    try { hostname = new URL(url).hostname; } catch(e) { hostname = url; }
-    if (t) { t.url = url; t.title = hostname; }
+    if (t) { t.url = url; try { t.title = new URL(url).hostname; } catch(e) { t.title = url; } }
+    brHistory = brHistory.slice(0, brHistoryIdx + 1);
+    brHistory.push(url);
+    brHistoryIdx = brHistory.length - 1;
     const urlInput = document.getElementById("brUrl-" + winId);
     if (urlInput) urlInput.value = url;
     const ssl = document.getElementById("brSsl-" + winId);
     if (ssl) { ssl.textContent = url.startsWith('https') ? '🔒' : '⚠️'; ssl.className = 'br-ssl ' + (url.startsWith('https') ? 'secure' : 'insecure'); }
+    const contentEl = document.getElementById("brContent-" + winId);
+    if (!contentEl) {
+      body.querySelector('.br').innerHTML = `<div class="br-tabs" id="brTabs-${winId}"></div>${renderBookmarks()}<div class="br-toolbar"><button class="br-nav" id="brBack-${winId}">◀</button><button class="br-nav" id="brFwd-${winId}">▶</button><button class="br-nav" id="brReload-${winId}">⟳</button><button class="br-nav" id="brHomeBtn-${winId}" title="Home">⌂</button><span class="br-ssl ${url.startsWith('https') ? 'secure' : 'insecure'}" id="brSsl-${winId}">${url.startsWith('https') ? '🔒' : '⚠️'}</span><input class="br-url" id="brUrl-${winId}" value="${url}"><span class="br-ssl" id="brStatus-${winId}" style="font-size:9px;width:auto"></span></div>${renderContent('<div class="br-news-loading">Loading...</div>')}`;
+      bindEvents();
+    }
     renderTabs();
+    let hostname = '';
+    try { hostname = new URL(url).hostname; } catch(e) { hostname = url; }
     statusEl.textContent = `🌐 ${hostname}`;
+    fetchAndRender(url);
+  }
+
+  function goHome() {
+    const t = browserTabs.find(x => x.id === browserTabId);
+    if (t) { t.url = 'home'; t.title = '🏠 Home'; }
+    brHistory = [];
+    brHistoryIdx = -1;
+    body.querySelector('.br').innerHTML = `<div class="br-tabs" id="brTabs-${winId}"></div>${renderBookmarks()}<div class="br-toolbar"><button class="br-nav" id="brBack-${winId}">◀</button><button class="br-nav" id="brFwd-${winId}">▶</button><button class="br-nav" id="brReload-${winId}">⟳</button><button class="br-nav" id="brHomeBtn-${winId}" title="Home">⌂</button><span class="br-ssl secure" id="brSsl-${winId}">🔒</span><input class="br-url" id="brUrl-${winId}" value=""><span class="br-ssl" id="brStatus-${winId}" style="font-size:9px;width:auto"></span></div>${renderHome()}`;
+    renderTabs();
+    bindEvents();
+    loadNews();
+    statusEl.textContent = '🌐 Home';
   }
 
   async function loadNews() {
@@ -2152,19 +2213,29 @@ function renderBrowser(body, statusEl, winId) {
 
   function bindEvents() {
     const urlInput = document.getElementById("brUrl-" + winId);
-    if (urlInput) urlInput.addEventListener("keydown", e => { if (e.key === "Enter") { SFX.play('click'); setUrl(e.target.value); } });
+    if (urlInput) urlInput.addEventListener("keydown", e => { if (e.key === "Enter") { SFX.play('click'); navigateTo(e.target.value); } });
     const backBtn = document.getElementById("brBack-" + winId);
-    if (backBtn) backBtn.addEventListener("click", () => { SFX.play('click'); const frame = document.getElementById("brFrame-" + winId); try { frame.contentWindow.history.back(); } catch (e) {} });
+    if (backBtn) backBtn.addEventListener("click", () => {
+      SFX.play('click');
+      if (brHistoryIdx > 0) { brHistoryIdx--; navigateTo(brHistory[brHistoryIdx]); }
+    });
     const fwdBtn = document.getElementById("brFwd-" + winId);
-    if (fwdBtn) fwdBtn.addEventListener("click", () => { SFX.play('click'); const frame = document.getElementById("brFrame-" + winId); try { frame.contentWindow.history.forward(); } catch (e) {} });
+    if (fwdBtn) fwdBtn.addEventListener("click", () => {
+      SFX.play('click');
+      if (brHistoryIdx < brHistory.length - 1) { brHistoryIdx++; navigateTo(brHistory[brHistoryIdx]); }
+    });
     const reloadBtn = document.getElementById("brReload-" + winId);
-    if (reloadBtn) reloadBtn.addEventListener("click", () => { SFX.play('click'); const frame = document.getElementById("brFrame-" + winId); if (frame) frame.src = frame.src; });
+    if (reloadBtn) reloadBtn.addEventListener("click", () => {
+      SFX.play('click');
+      const t = browserTabs.find(x => x.id === browserTabId);
+      if (t && t.url !== 'home') navigateTo(t.url);
+    });
     const homeBtn = document.getElementById("brHomeBtn-" + winId);
-    if (homeBtn) homeBtn.addEventListener("click", () => { SFX.play('click'); setUrl('home'); });
+    if (homeBtn) homeBtn.addEventListener("click", () => { SFX.play('click'); goHome(); });
     const searchInput = document.getElementById("brSearch-" + winId);
     const searchBtn = document.getElementById("brSearchBtn-" + winId);
-    if (searchInput) searchInput.addEventListener("keydown", e => { if (e.key === "Enter") { SFX.play('click'); const q = e.target.value.trim(); if (q) setUrl(q.includes('.') ? (q.startsWith('http') ? q : 'https://' + q) : 'https://www.google.com/search?q=' + encodeURIComponent(q)); } });
-    if (searchBtn) searchBtn.addEventListener("click", () => { SFX.play('click'); const q = searchInput.value.trim(); if (q) setUrl(q.includes('.') ? (q.startsWith('http') ? q : 'https://' + q) : 'https://www.google.com/search?q=' + encodeURIComponent(q)); });
+    if (searchInput) searchInput.addEventListener("keydown", e => { if (e.key === "Enter") { SFX.play('click'); const q = e.target.value.trim(); if (q) navigateTo(q.includes('.') ? (q.startsWith('http') ? q : 'https://' + q) : 'https://www.google.com/search?q=' + encodeURIComponent(q)); } });
+    if (searchBtn) searchBtn.addEventListener("click", () => { SFX.play('click'); const q = searchInput.value.trim(); if (q) navigateTo(q.includes('.') ? (q.startsWith('http') ? q : 'https://' + q) : 'https://www.google.com/search?q=' + encodeURIComponent(q)); });
   }
 
   renderTabs();
@@ -2177,15 +2248,20 @@ function renderBrowser(body, statusEl, winId) {
       const id = ++browserTabId;
       browserTabs.push({ id, url: "home", title: "🏠 Home" });
       browserTabId = id;
+      brHistory = [];
+      brHistoryIdx = -1;
       renderTabs();
-      setUrl('home');
+      goHome();
     }
     const tab = e.target.closest(".br-tab");
     if (tab && !e.target.closest(".br-tab-close")) {
       SFX.play('click');
       browserTabId = +tab.dataset.id;
       const t = browserTabs.find(x => x.id === browserTabId);
-      if (t) setUrl(t.url);
+      if (t) {
+        if (t.url === 'home') goHome();
+        else navigateTo(t.url);
+      }
     }
     const close = e.target.closest(".br-tab-close");
     if (close) {
@@ -2193,15 +2269,15 @@ function renderBrowser(body, statusEl, winId) {
       const id = +close.dataset.id;
       if (browserTabs.length <= 1) return;
       browserTabs = browserTabs.filter(t => t.id !== id);
-      if (browserTabId === id) { browserTabId = browserTabs[0].id; setUrl(browserTabs[0].url); }
+      if (browserTabId === id) { browserTabId = browserTabs[0].id; const t = browserTabs[0]; if (t.url === 'home') goHome(); else navigateTo(t.url); }
       renderTabs();
     }
     const bm = e.target.closest(".br-bm");
-    if (bm) { SFX.play('click'); setUrl(bm.dataset.url); }
+    if (bm) { SFX.play('click'); navigateTo(bm.dataset.url); }
     const qi = e.target.closest(".br-quick-item");
-    if (qi) { SFX.play('click'); setUrl(qi.dataset.url); }
+    if (qi) { SFX.play('click'); navigateTo(qi.dataset.url); }
     const nc = e.target.closest(".br-news-card");
-    if (nc) { SFX.play('click'); setUrl(nc.dataset.url); }
+    if (nc) { SFX.play('click'); navigateTo(nc.dataset.url); }
   });
 }
 
