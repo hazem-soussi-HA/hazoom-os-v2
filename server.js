@@ -228,6 +228,248 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // === YOUTUBE / INVIDIOUS — Ad-Free Video World ===
+  const INVIDIOUS_INSTANCES = [
+    'https://vid.puffyan.us',
+    'https://yewtu.be',
+    'https://inv.tux.pizza',
+    'https://invidious.fdn.fr',
+    'https://iv.ggtyler.dev',
+    'https://invidious.privacyredirect.com',
+    'https://yt.artemislena.eu',
+    'https://invidious.lunar.icu',
+    'https://invidious.protokoll-11.de',
+    'https://invidious.perennialte.ch'
+  ];
+
+  // Positive content categories
+  const POSITIVE_CATEGORIES = [
+    { id: 'education', name: 'Education', icon: '📚', query: 'educational tutorial learning' },
+    { id: 'science', name: 'Science', icon: '🔬', query: 'science discovery experiment' },
+    { id: 'nature', name: 'Nature', icon: '🌿', query: 'nature documentary wildlife' },
+    { id: 'music', name: 'Music', icon: '🎵', query: 'music performance concert live' },
+    { id: 'tech', name: 'Technology', icon: '💻', query: 'technology innovation coding' },
+    { id: 'art', name: 'Art & Design', icon: '🎨', query: 'art painting design creative' },
+    { id: 'cooking', name: 'Cooking', icon: '🍳', query: 'cooking recipe kitchen' },
+    { id: 'space', name: 'Space', icon: '🚀', query: 'space astronomy nasa universe' },
+    { id: 'history', name: 'History', icon: '📜', query: 'history documentary ancient' },
+    { id: 'motivation', name: 'Motivation', icon: '💪', query: 'motivation inspiration success' }
+  ];
+
+  // Fallback: YouTube oEmbed for basic video info
+  async function getYoutubeOembed(videoId) {
+    try {
+      const result = await fetchURL(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`, 5000);
+      const data = JSON.parse(result.body);
+      return {
+        id: videoId,
+        title: data.title || 'Unknown',
+        author: data.author_name || 'Unknown',
+        thumbnail: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`,
+        views: 0,
+        length: 0,
+        description: ''
+      };
+    } catch(e) { return null; }
+  }
+
+  // Fallback: Search YouTube via web scraping
+  async function searchYouTubeFallback(query) {
+    try {
+      const result = await fetchURL(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, 8000);
+      const html = result.body;
+      const videoIds = [];
+      const titleRegex = /"videoId":"([^"]+)"/g;
+      let match;
+      while ((match = titleRegex.exec(html)) !== null && videoIds.length < 20) {
+        if (!videoIds.includes(match[1])) videoIds.push(match[1]);
+      }
+      const videos = [];
+      for (const id of videoIds.slice(0, 15)) {
+        const info = await getYoutubeOembed(id);
+        if (info) videos.push(info);
+      }
+      return videos;
+    } catch(e) { return []; }
+  }
+
+  // YouTube search via Invidious
+  if (url.pathname === '/yt/search') {
+    const query = url.searchParams.get('q');
+    const category = url.searchParams.get('cat');
+    const page = parseInt(url.searchParams.get('page') || '1');
+
+    let searchQuery = query;
+    if (category && !query) {
+      const cat = POSITIVE_CATEGORIES.find(c => c.id === category);
+      if (cat) searchQuery = cat.query;
+    }
+    if (!searchQuery) searchQuery = 'educational tutorial';
+
+    // Add positive filter
+    searchQuery += ' -shorts -live -reaction';
+
+    let lastError;
+    for (const instance of INVIDIOUS_INSTANCES) {
+      try {
+        const apiUrl = `${instance}/api/v1/search?q=${encodeURIComponent(searchQuery)}&page=${page}&type=video&sort_by=relevance`;
+        const result = await fetchURL(apiUrl, 8000);
+        const videos = JSON.parse(result.body);
+        const filtered = (Array.isArray(videos) ? videos : []).filter(v => {
+          const title = (v.title || '').toLowerCase();
+          const desc = (v.description || '').toLowerCase();
+          // Filter out negative content
+          const negative = ['hate', 'violence', 'war', 'kill', 'death', 'disaster', 'crisis', 'scam', 'fraud', 'abuse'];
+          return !negative.some(n => title.includes(n) || desc.includes(n));
+        }).map(v => ({
+          id: v.videoId,
+          title: v.title,
+          author: v.author,
+          views: v.viewCount,
+          length: v.lengthSeconds,
+          published: v.publishedText,
+          thumbnail: v.videoThumbnails?.find(t => t.quality === 'medium')?.url || v.videoThumbnails?.[0]?.url || '',
+          description: (v.description || '').slice(0, 200)
+        }));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ instance, count: filtered.length, videos: filtered }));
+        return;
+      } catch(e) { lastError = e; }
+    }
+    // Fallback: YouTube direct search
+    try {
+      const fallbackVideos = await searchYouTubeFallback(searchQuery);
+      if (fallbackVideos.length) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ instance: 'youtube-fallback', count: fallbackVideos.length, videos: fallbackVideos }));
+        return;
+      }
+    } catch(e) {}
+    res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'All Invidious instances failed', lastError: lastError?.message }));
+    return;
+  }
+
+  // Trending / popular videos
+  if (url.pathname === '/yt/trending') {
+    const region = url.searchParams.get('region') || 'US';
+    let lastError;
+    for (const instance of INVIDIOUS_INSTANCES) {
+      try {
+        const apiUrl = `${instance}/api/v1/trending?region=${region}`;
+        const result = await fetchURL(apiUrl, 8000);
+        const videos = JSON.parse(result.body);
+        const filtered = (Array.isArray(videos) ? videos : []).slice(0, 30).map(v => ({
+          id: v.videoId,
+          title: v.title,
+          author: v.author,
+          views: v.viewCount,
+          length: v.lengthSeconds,
+          published: v.publishedText,
+          thumbnail: v.videoThumbnails?.find(t => t.quality === 'medium')?.url || ''
+        }));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ region, count: filtered.length, videos: filtered }));
+        return;
+      } catch(e) { lastError = e; }
+    }
+    // Fallback: trending via YouTube search
+    try {
+      const fallbackVideos = await searchYouTubeFallback('trending popular 2024');
+      if (fallbackVideos.length) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ region, count: fallbackVideos.length, videos: fallbackVideos, source: 'fallback' }));
+        return;
+      }
+    } catch(e) {}
+    res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Trending fetch failed', lastError: lastError?.message }));
+    return;
+  }
+
+  // Get video info
+  if (url.pathname === '/yt/info') {
+    const videoId = url.searchParams.get('v');
+    if (!videoId) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing v parameter' }));
+      return;
+    }
+    let lastError;
+    for (const instance of INVIDIOUS_INSTANCES) {
+      try {
+        const apiUrl = `${instance}/api/v1/videos/${videoId}`;
+        const result = await fetchURL(apiUrl, 8000);
+        const info = JSON.parse(result.body);
+        // Get adaptive formats for streaming
+        const formats = (info.adaptiveFormats || []).filter(f => f.type && (f.type.includes('video') || f.type.includes('audio')));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          id: info.videoId,
+          title: info.title,
+          author: info.author,
+          views: info.viewCount,
+          length: info.lengthSeconds,
+          published: info.publishedText,
+          description: info.description,
+          thumbnail: info.videoThumbnails?.find(t => t.quality === 'maxres')?.url || info.videoThumbnails?.[0]?.url || '',
+          keywords: info.keywords || [],
+          likeCount: info.likeCount,
+          formats: formats.map(f => ({
+            type: f.type,
+            quality: f.qualityLabel || f.quality,
+            url: f.url,
+            bitrate: f.bitrate,
+            container: f.container
+          }))
+        }));
+        return;
+      } catch(e) { lastError = e; }
+    }
+    res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Video info fetch failed', lastError: lastError?.message }));
+    return;
+  }
+
+  // Stream video (proxied, no ads)
+  if (url.pathname === '/yt/stream') {
+    const videoId = url.searchParams.get('v');
+    const quality = url.searchParams.get('q') || '720p';
+    if (!videoId) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Missing v parameter' }));
+      return;
+    }
+    let lastError;
+    for (const instance of INVIDIOUS_INSTANCES) {
+      try {
+        // Get video info first
+        const apiUrl = `${instance}/api/v1/videos/${videoId}`;
+        const result = await fetchURL(apiUrl, 8000);
+        const info = JSON.parse(result.body);
+        const formats = info.adaptiveFormats || [];
+        // Find best matching format
+        let format = formats.find(f => f.qualityLabel === quality && f.type?.includes('video'));
+        if (!format) format = formats.find(f => f.type?.includes('video') && f.qualityLabel);
+        if (!format && formats.length) format = formats[0];
+        if (!format || !format.url) throw new Error('No suitable format found');
+        // Redirect to the actual stream URL (no ads)
+        res.writeHead(302, { 'Location': format.url });
+        return;
+      } catch(e) { lastError = e; }
+    }
+    res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Stream fetch failed', lastError: lastError?.message }));
+    return;
+  }
+
+  // Categories list
+  if (url.pathname === '/yt/categories') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(POSITIVE_CATEGORIES));
+    return;
+  }
+
   // Static files
   let fp = path.join(ROOT, url.pathname === '/' ? 'index.html' : url.pathname);
   if (!fs.existsSync(fp)) { res.writeHead(404); res.end('Not Found'); return; }

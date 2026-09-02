@@ -211,6 +211,39 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Inter',sans-serif;
 .br-search input{flex:1;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:0 14px;color:var(--text);font-size:12px;outline:none}
 .br-search input:focus{border-color:var(--accent)}
 .br-search button{height:36px;padding:0 16px;border-radius:18px;border:none;background:var(--accent);color:#fff;font-size:12px;cursor:pointer}
+.vid{display:flex;flex-direction:column;height:100%;background:#0a0a1a}
+.vid-top{display:flex;gap:6px;padding:8px 12px;background:rgba(0,0,0,.3);flex-shrink:0;align-items:center}
+.vid-search{flex:1;height:32px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:0 14px;color:#fff;font-size:11px;font-family:'JetBrains Mono',monospace;outline:none}
+.vid-search:focus{border-color:#e74c3c}
+.vid-search::placeholder{color:rgba(255,255,255,.3)}
+.vid-btn{height:32px;padding:0 12px;border-radius:16px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);font-size:10px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .15s}
+.vid-btn:hover{background:rgba(231,76,60,.2);border-color:#e74c3c;color:#fff}
+.vid-btn.active{background:#e74c3c;border-color:#e74c3c;color:#fff}
+.vid-cats{display:flex;gap:4px;padding:6px 12px;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
+.vid-cats::-webkit-scrollbar{display:none}
+.vid-main{flex:1;display:flex;gap:0;overflow:hidden}
+.vid-player{flex:2;display:flex;flex-direction:column;background:#000;position:relative}
+.vid-player video{width:100%;flex:1;background:#000}
+.vid-player-controls{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(0,0,0,.8)}
+.vid-play-btn{width:32px;height:32px;border-radius:50%;border:none;background:#e74c3c;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.vid-progress{flex:1;height:4px;background:rgba(255,255,255,.2);border-radius:2px;cursor:pointer;position:relative}
+.vid-progress-fill{height:100%;background:#e74c3c;border-radius:2px;transition:width .1s}
+.vid-time{font-size:10px;color:rgba(255,255,255,.6);font-family:'JetBrains Mono',monospace}
+.vid-sidebar{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;background:rgba(0,0,0,.2);border-left:1px solid rgba(255,255,255,.05)}
+.vid-card{display:flex;gap:8px;padding:6px;border-radius:8px;cursor:pointer;transition:all .15s;border:1px solid transparent}
+.vid-card:hover{background:rgba(255,255,255,.05);border-color:rgba(231,76,60,.3)}
+.vid-card.active{background:rgba(231,76,60,.1);border-color:#e74c3c}
+.vid-thumb{width:120px;height:68px;border-radius:6px;background:#222;flex-shrink:0;object-fit:cover;position:relative;overflow:hidden}
+.vid-thumb img{width:100%;height:100%;object-fit:cover}
+.vid-thumb .vid-dur{position:absolute;bottom:2px;right:2px;background:rgba(0,0,0,.8);color:#fff;font-size:8px;padding:1px 4px;border-radius:3px;font-family:'JetBrains Mono',monospace}
+.vid-info{flex:1;min-width:0}
+.vid-info .vid-title{font-size:11px;color:#fff;font-weight:500;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vid-info .vid-meta{font-size:9px;color:rgba(255,255,255,.4);margin-top:3px}
+.vid-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.3);gap:8px}
+.vid-empty .big{font-size:48px}
+.vid-loading{display:flex;align-items:center;justify-content:center;height:100%;color:rgba(255,255,255,.5);font-size:12px;gap:8px}
+.vid-spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,.1);border-top-color:#e74c3c;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .mon{padding:12px;display:flex;flex-direction:column;gap:8px;height:100%;overflow-y:auto}
 .mon-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px}
 .mon-card-title{font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
@@ -561,7 +594,8 @@ const APPS = [
   { id: "diskusage", name: "Disk Usage", icon: "💿", w: 400, h: 380 },
   { id: "iopanel", name: "I/O Panel", icon: "🔌", color: "#00b894", w: 520, h: 450 },
   { id: "ai", name: "AI Agent", icon: "🧠", color: "#6c5ce7", cat: "System", w: 520, h: 520 },
-  { id: "ping", name: "Ping Test", icon: "📡", color: "#00b894", cat: "System", w: 480, h: 420 }
+  { id: "ping", name: "Ping Test", icon: "📡", color: "#00b894", cat: "System", w: 480, h: 420 },
+  { id: "video", name: "Video World", icon: "🎬", color: "#e74c3c", cat: "Media", w: 900, h: 600 }
 ];
 
 const WALLPAPERS = [
@@ -1326,7 +1360,7 @@ window.clearNotifs = function() { notifications = []; renderNotifCenter(); };
 
 function renderDesktopIcons() {
   const el = $("#desktop-icons");
-  const desktopApps = ["terminal", "filemanager", "browser", "settings", "iopanel", "ai", "ping"];
+  const desktopApps = ["terminal", "filemanager", "browser", "settings", "iopanel", "ai", "ping", "video"];
   el.innerHTML = desktopApps.map(id => {
     const app = APPS.find(a => a.id === id);
     return `<div class="dicon" data-tip="Open ${app.name}" ondblclick="window.openApp('${id}')"><div class="dicon-i">${app.icon}</div><div class="dicon-t">${app.name}</div></div>`;
@@ -1657,6 +1691,7 @@ function renderAppContent(winId, appId, opts) {
     case "iopanel": renderIOPanel(body, statusEl, winId); break;
     case "ai": renderAI(body, statusEl, winId); break;
     case "ping": initPing(body, winId); break;
+    case "video": initVideo(body, winId); break;
   }
 }
 
@@ -2782,6 +2817,205 @@ function renderPingChart(wid, history) {
     const color = v < 50 ? 'var(--success)' : v < 150 ? 'var(--accent2)' : 'var(--warn)';
     return `<div class="ping-chart-bar" style="height:${h}%;background:${color}"></div>`;
   }).join('');
+}
+
+// ═══ VIDEO WORLD — Ad-Free YouTube ═══
+function initVideo(body, winId) {
+  let currentVideo = null;
+  let currentCategory = '';
+  let searchQuery = '';
+  let videoHistory = [];
+
+  const CATEGORIES = [
+    { id: '', name: 'All', icon: '🌟' },
+    { id: 'education', name: 'Education', icon: '📚' },
+    { id: 'science', name: 'Science', icon: '🔬' },
+    { id: 'nature', name: 'Nature', icon: '🌿' },
+    { id: 'music', name: 'Music', icon: '🎵' },
+    { id: 'tech', name: 'Tech', icon: '💻' },
+    { id: 'art', name: 'Art', icon: '🎨' },
+    { id: 'cooking', name: 'Cooking', icon: '🍳' },
+    { id: 'space', name: 'Space', icon: '🚀' },
+    { id: 'history', name: 'History', icon: '📜' },
+    { id: 'motivation', name: 'Motivation', icon: '💪' }
+  ];
+
+  function formatViews(n) {
+    if (!n) return '';
+    if (n >= 1e6) return (n/1e6).toFixed(1) + 'M views';
+    if (n >= 1e3) return (n/1e3).toFixed(1) + 'K views';
+    return n + ' views';
+  }
+
+  function formatDuration(s) {
+    if (!s) return '';
+    const m = Math.floor(s/60);
+    const sec = s%60;
+    return m + ':' + String(sec).padStart(2,'0');
+  }
+
+  function renderLayout() {
+    body.innerHTML = `<div class="vid">
+      <div class="vid-top">
+        <input class="vid-search" id="vidSearch-${winId}" placeholder="Search positive content..." value="${searchQuery}">
+        <button class="vid-btn" id="vidSearchBtn-${winId}">🔍 Search</button>
+        <button class="vid-btn" id="vidTrending-${winId}">🔥 Trending</button>
+      </div>
+      <div class="vid-cats" id="vidCats-${winId}">
+        ${CATEGORIES.map(c => `<button class="vid-btn ${c.id === currentCategory ? 'active' : ''}" data-cat="${c.id}">${c.icon} ${c.name}</button>`).join('')}
+      </div>
+      <div class="vid-main">
+        <div class="vid-player" id="vidPlayer-${winId}">
+          ${currentVideo ? `
+            <video id="vidVideo-${winId}" controls autoplay src="/yt/stream?v=${currentVideo.id}&q=720p"></video>
+            <div class="vid-player-controls">
+              <div style="font-size:11px;color:#fff;flex:1;line-height:1.3">
+                <div style="font-weight:600">${currentVideo.title}</div>
+                <div style="font-size:9px;color:rgba(255,255,255,.5);margin-top:2px">${currentVideo.author} · ${formatViews(currentVideo.views)}</div>
+              </div>
+            </div>
+          ` : `
+            <div class="vid-empty">
+              <div class="big">🎬</div>
+              <div style="font-size:14px;font-weight:600">HAZOOM Video World</div>
+              <div style="font-size:11px">Ad-free · Positive · Open Source</div>
+              <div style="font-size:10px;margin-top:8px">Select a category or search to begin</div>
+            </div>
+          `}
+        </div>
+        <div class="vid-sidebar" id="vidSidebar-${winId}">
+          <div class="vid-loading"><div class="vid-spinner"></div> Loading videos...</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  async function searchVideos(query, category) {
+    const sidebar = document.getElementById(`vidSidebar-${winId}`);
+    if (!sidebar) return;
+    sidebar.innerHTML = '<div class="vid-loading"><div class="vid-spinner"></div> Searching...</div>';
+    try {
+      let url = '/yt/search?';
+      if (query) url += `q=${encodeURIComponent(query)}`;
+      else if (category) url += `cat=${category}`;
+      else url += 'q=educational tutorial';
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.videos && data.videos.length) {
+        sidebar.innerHTML = data.videos.map(v => `
+          <div class="vid-card ${currentVideo?.id === v.id ? 'active' : ''}" data-id="${v.id}" data-title="${escapeHtml(v.title)}" data-author="${escapeHtml(v.author)}" data-views="${v.views}">
+            <div class="vid-thumb">
+              <img src="${v.thumbnail}" alt="" onerror="this.style.display='none'">
+              ${v.length ? `<span class="vid-dur">${formatDuration(v.length)}</span>` : ''}
+            </div>
+            <div class="vid-info">
+              <div class="vid-title">${escapeHtml(v.title)}</div>
+              <div class="vid-meta">${escapeHtml(v.author)} · ${formatViews(v.views)}</div>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        sidebar.innerHTML = '<div class="vid-empty"><div class="big">🔍</div><div>No videos found</div></div>';
+      }
+    } catch(e) {
+      sidebar.innerHTML = `<div class="vid-empty"><div class="big">⚠️</div><div>Search failed</div><div style="font-size:10px">${e.message}</div></div>`;
+    }
+  }
+
+  async function loadTrending() {
+    const sidebar = document.getElementById(`vidSidebar-${winId}`);
+    if (!sidebar) return;
+    sidebar.innerHTML = '<div class="vid-loading"><div class="vid-spinner"></div> Loading trending...</div>';
+    try {
+      const res = await fetch('/yt/trending');
+      const data = await res.json();
+      if (data.videos && data.videos.length) {
+        sidebar.innerHTML = data.videos.map(v => `
+          <div class="vid-card ${currentVideo?.id === v.id ? 'active' : ''}" data-id="${v.id}" data-title="${escapeHtml(v.title)}" data-author="${escapeHtml(v.author)}" data-views="${v.views}">
+            <div class="vid-thumb">
+              <img src="${v.thumbnail}" alt="" onerror="this.style.display='none'">
+              ${v.length ? `<span class="vid-dur">${formatDuration(v.length)}</span>` : ''}
+            </div>
+            <div class="vid-info">
+              <div class="vid-title">${escapeHtml(v.title)}</div>
+              <div class="vid-meta">${escapeHtml(v.author)} · ${formatViews(v.views)}</div>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        sidebar.innerHTML = '<div class="vid-empty"><div class="big">🔥</div><div>No trending videos</div></div>';
+      }
+    } catch(e) {
+      sidebar.innerHTML = `<div class="vid-empty"><div class="big">⚠️</div><div>Failed to load</div></div>`;
+    }
+  }
+
+  function playVideo(id, title, author) {
+    currentVideo = { id, title, author };
+    videoHistory.push({ id, title, author });
+    const player = document.getElementById(`vidPlayer-${winId}`);
+    if (player) {
+      player.innerHTML = `
+        <video id="vidVideo-${winId}" controls autoplay src="/yt/stream?v=${id}&q=720p"></video>
+        <div class="vid-player-controls">
+          <div style="font-size:11px;color:#fff;flex:1;line-height:1.3">
+            <div style="font-weight:600">${title}</div>
+            <div style="font-size:9px;color:rgba(255,255,255,.5);margin-top:2px">${author}</div>
+          </div>
+        </div>`;
+    }
+    // Highlight active card
+    document.querySelectorAll(`#vidSidebar-${winId} .vid-card`).forEach(c => {
+      c.classList.toggle('active', c.dataset.id === id);
+    });
+    SFX.play('open');
+  }
+
+  renderLayout();
+
+  // Event listeners
+  const searchInput = document.getElementById(`vidSearch-${winId}`);
+  const searchBtn = document.getElementById(`vidSearchBtn-${winId}`);
+  const trendingBtn = document.getElementById(`vidTrending-${winId}`);
+
+  if (searchInput) searchInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      searchQuery = e.target.value.trim();
+      currentCategory = '';
+      document.querySelectorAll(`#vidCats-${winId} .vid-btn`).forEach(b => b.classList.toggle('active', b.dataset.cat === ''));
+      searchVideos(searchQuery, '');
+    }
+  });
+  if (searchBtn) searchBtn.addEventListener('click', () => {
+    searchQuery = searchInput.value.trim();
+    currentCategory = '';
+    document.querySelectorAll(`#vidCats-${winId} .vid-btn`).forEach(b => b.classList.toggle('active', b.dataset.cat === ''));
+    searchVideos(searchQuery, '');
+  });
+  if (trendingBtn) trendingBtn.addEventListener('click', () => {
+    searchQuery = '';
+    currentCategory = '';
+    document.querySelectorAll(`#vidCats-${winId} .vid-btn`).forEach(b => b.classList.toggle('active', b.dataset.cat === ''));
+    loadTrending();
+  });
+
+  body.addEventListener('click', e => {
+    const catBtn = e.target.closest('[data-cat]');
+    if (catBtn) {
+      currentCategory = catBtn.dataset.cat;
+      searchQuery = '';
+      if (searchInput) searchInput.value = '';
+      document.querySelectorAll(`#vidCats-${winId} .vid-btn`).forEach(b => b.classList.toggle('active', b.dataset.cat === currentCategory));
+      searchVideos('', currentCategory);
+    }
+    const card = e.target.closest('.vid-card');
+    if (card) {
+      playVideo(card.dataset.id, card.dataset.title, card.dataset.author);
+    }
+  });
+
+  // Load initial content
+  searchVideos('educational tutorial', '');
 }
 
 function escapeHtml(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
