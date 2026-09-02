@@ -1,0 +1,33 @@
+{
+  "name": "hazoom-os",
+  "version": "2.6.0",
+  "description": "HAZOOM OS — A complete web-based operating system with AI agents, procedural audio, animated backgrounds, and 19+ applications",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "health": "node health.js",
+    "test": "node test.js",
+    "build": "echo 'Build complete'",
+    "docker:build": "docker build -t hazoom-os .",
+    "docker:run": "docker run -p 8888:8888 hazoom-os",
+    "deploy": "echo 'Deploying HAZOOM OS...'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hazem-soussi/hazoom-os.git"
+  },
+  "keywords": ["os", "web-os", "operating-system", "ai-agents", "procedural-audio", "interactive"],
+  "author": "Hazem Soussi <hazem@soussi.dev>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "index.html",
+    "server.js",
+    "health.js",
+    "LICENSE",
+    "README.md"
+  ]
+}

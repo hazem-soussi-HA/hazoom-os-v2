@@ -1,0 +1,3224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAZOOM OS v2.0</title>
+<style>
+/* ═══ HAZOOM OS v2.0 ═══ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:wght@700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0c14;--surface:#12151f;--surface2:#1a1e2e;--surface3:#222840;--border:#2a3050;--border2:#3a4070;--text:#e8ecf4;--text2:#9aa4c0;--text3:#5a6580;--accent:#6c5ce7;--accent2:#a29bfe;--accent3:#4ecdc4;--danger:#ff6b6b;--warn:#feca57;--success:#48c774;--glass:rgba(18,21,31,.88);--glass2:rgba(26,30,46,.92);--shadow:0 8px 32px rgba(0,0,0,.5);--radius:10px;--radius2:14px}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);user-select:none;-webkit-user-select:none}
+::selection{background:rgba(108,92,231,.3)}
+#boot{position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 1.2s}
+#boot.done{opacity:0;pointer-events:none}
+.boot-logo{font-family:'Playfair Display',serif;font-size:42px;font-weight:900;background:linear-gradient(135deg,#6c5ce7,#a29bfe,#4ecdc4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.boot-sub{font-size:11px;color:#5a6580;letter-spacing:4px;text-transform:uppercase;margin-bottom:40px}
+.boot-bar{width:200px;height:2px;background:#1a1e2e;border-radius:2px;overflow:hidden}
+.boot-fill{height:100%;width:0%;background:linear-gradient(90deg,#6c5ce7,#4ecdc4);border-radius:2px;transition:width .3s}
+.boot-status{margin-top:16px;font-size:10px;color:#3a4070;letter-spacing:1px}
+#lockScreen{position:fixed;inset:0;z-index:99998;background:linear-gradient(135deg,#0a0c14,#12151f);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s}
+#lockScreen.done{opacity:0;pointer-events:none}
+.lock-time{font-size:72px;font-weight:800;font-family:'JetBrains Mono',monospace;background:linear-gradient(135deg,var(--accent2),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.lock-date{font-size:14px;color:var(--text2);margin-top:4px}
+.lock-input-wrap{margin-top:40px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.lock-input{width:200px;height:40px;background:var(--surface);border:2px solid var(--border);border-radius:8px;padding:0 14px;color:var(--text);font-size:18px;font-family:'JetBrains Mono',monospace;text-align:center;outline:none;transition:border-color .2s}
+.lock-input:focus{border-color:var(--accent)}
+.lock-hint{font-size:10px;color:var(--text3)}
+.lock-avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent3));display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:16px}
+#desktop{position:fixed;inset:0;overflow:hidden}
+#wallpaper{position:absolute;inset:0;z-index:1;pointer-events:none;transition:background .5s}
+#wallpaper::after{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='g' width='60' height='60' patternUnits='userSpaceOnUse'%3E%3Cpath d='M0 30h60M30 0v60' stroke='%23ffffff' stroke-width='.3' opacity='.03'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='60' height='60' fill='url(%23g)'/%3E%3C/svg%3E")}
+#desktop-icons{position:absolute;top:16px;left:16px;z-index:2;display:flex;flex-direction:column;gap:4px}
+.dicon{width:72px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:8px;cursor:pointer;transition:background .15s}
+.dicon:hover{background:rgba(108,92,231,.12)}
+.dicon-i{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--surface2);border:1px solid var(--border)}
+.dicon-t{font-size:9px;color:var(--text2);text-align:center;line-height:1.2}
+#taskbar{position:absolute;bottom:0;left:0;right:0;height:44px;z-index:1000;display:flex;align-items:center;padding:0 8px;background:rgba(10,12,20,.92);backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.04)}
+#startBtn{width:36px;height:36px;border-radius:8px;border:none;background:transparent;color:var(--accent2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+#startBtn:hover,#startBtn.active{background:rgba(108,92,231,.15)}
+#taskApps{flex:1;display:flex;gap:2px;padding:0 8px;overflow-x:auto}
+#taskApps::-webkit-scrollbar{display:none}
+.tapp{height:34px;padding:0 12px;border-radius:6px;border:none;background:transparent;color:var(--text2);font-size:11px;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;transition:all .15s;position:relative}
+.tapp:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.tapp.active{background:rgba(108,92,231,.15);color:var(--text)}
+.tapp.active::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:16px;height:2px;background:var(--accent);border-radius:1px}
+#sysTray{display:flex;align-items:center;gap:6px;padding:0 8px}
+.systr{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;padding:4px 6px;border-radius:4px;cursor:pointer;transition:background .15s}
+.systr:hover{background:rgba(255,255,255,.04);color:var(--text2)}
+#clock{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace;padding:4px 10px;border-radius:6px;cursor:pointer;transition:background .15s}
+#clock:hover{background:rgba(255,255,255,.04)}
+#startMenu{position:absolute;bottom:52px;left:8px;width:320px;max-height:calc(100vh - 110px);background:var(--glass2);backdrop-filter:blur(30px) saturate(1.3);border:1px solid var(--border);border-radius:var(--radius2);box-shadow:var(--shadow);z-index:999;display:none;overflow:hidden}
+#startMenu.open{display:block;animation:su .2s ease}
+@keyframes su{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.sm-search{padding:12px;border-bottom:1px solid var(--border)}
+.sm-search input{width:100%;height:32px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0 12px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+.sm-search input:focus{border-color:var(--accent)}
+.sm-search input::placeholder{color:var(--text3)}
+.sm-grid{padding:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;max-height:320px;overflow-y:auto}
+.sm-grid::-webkit-scrollbar{width:4px}
+.sm-grid::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.sm-app{padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;border-radius:8px;cursor:pointer;transition:background .15s}
+.sm-app:hover{background:rgba(108,92,231,.1)}
+.sm-app-i{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;background:var(--surface2);border:1px solid var(--border)}
+.sm-app-n{font-size:9px;color:var(--text2);text-align:center}
+.sm-footer{padding:8px 12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.sm-footer span{font-size:10px;color:var(--text3)}
+.sm-power{width:28px;height:28px;border-radius:6px;border:none;background:transparent;color:var(--danger);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sm-power:hover{background:rgba(255,107,107,.1)}
+.window{position:absolute;min-width:280px;min-height:200px;background:var(--glass2);backdrop-filter:blur(24px) saturate(1.2);border:1px solid var(--border);border-radius:var(--radius2);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;transition:box-shadow .2s,opacity .2s,transform .25s}
+.window.focused{box-shadow:0 12px 48px rgba(0,0,0,.6);border-color:var(--border2)}
+.window.maximized{top:0!important;left:0!important;width:100%!important;height:calc(100% - 44px)!important;border-radius:0}
+.window.minimizing{transform:scale(.3) translateY(200px);opacity:0;pointer-events:none}
+.window.opening{animation:wopen .25s ease}
+@keyframes wopen{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.win-titlebar{height:36px;display:flex;align-items:center;padding:0 10px;gap:8px;cursor:default;flex-shrink:0;background:rgba(255,255,255,.02);border-bottom:1px solid rgba(255,255,255,.03)}
+.win-title{flex:1;font-size:11px;font-weight:600;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.win-title-icon{font-size:12px}
+.win-controls{display:flex;gap:4px}
+.win-btn{width:28px;height:28px;border-radius:6px;border:none;background:transparent;color:var(--text3);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.win-btn:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.win-btn.close:hover{background:rgba(255,107,107,.2);color:var(--danger)}
+.win-body{flex:1;overflow:auto;position:relative}
+.win-body::-webkit-scrollbar{width:6px;height:6px}
+.win-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.win-status{height:24px;padding:0 10px;display:flex;align-items:center;font-size:9px;color:var(--text3);border-top:1px solid rgba(255,255,255,.03);background:rgba(0,0,0,.15);flex-shrink:0}
+.snap-ind{position:fixed;z-index:999;border:2px solid var(--accent);background:rgba(108,92,231,.08);border-radius:12px;pointer-events:none;display:none;transition:all .2s}
+#altTab{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99998;background:var(--glass2);backdrop-filter:blur(30px);border:1px solid var(--border);border-radius:14px;padding:16px;display:none;box-shadow:var(--shadow)}
+#altTab.show{display:flex;gap:8px;animation:su .15s ease}
+.alt-tab-item{width:90px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;border-radius:8px;border:2px solid transparent;transition:all .1s}
+.alt-tab-item.sel{border-color:var(--accent);background:rgba(108,92,231,.12)}
+.alt-tab-icon{font-size:24px}
+.alt-tab-name{font-size:9px;color:var(--text2);text-align:center}
+#notifCenter{position:fixed;top:8px;right:8px;bottom:52px;width:320px;z-index:9998;background:var(--glass2);backdrop-filter:blur(30px);border:1px solid var(--border);border-radius:var(--radius2);box-shadow:var(--shadow);display:none;flex-direction:column;overflow:hidden}
+#notifCenter.open{display:flex;animation:su .2s ease}
+.nc-head{padding:12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.nc-head span{font-size:12px;font-weight:600}
+.nc-clear{font-size:10px;color:var(--accent2);cursor:pointer;background:none;border:none}
+.nc-list{flex:1;overflow-y:auto;padding:8px}
+.nc-item{padding:10px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.03);margin-bottom:4px;animation:su .2s ease}
+.nc-item-i{font-size:14px;margin-bottom:4px}
+.nc-item-t{font-size:11px;color:var(--text);line-height:1.4}
+.nc-item-time{font-size:9px;color:var(--text3);margin-top:4px}
+.nc-empty{padding:30px;text-align:center;font-size:11px;color:var(--text3)}
+#shutdownDlg{position:fixed;inset:0;z-index:99997;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}
+#shutdownDlg.show{display:flex}
+.sd-box{background:var(--glass2);border:1px solid var(--border);border-radius:16px;padding:32px;width:320px;text-align:center;box-shadow:var(--shadow);animation:su .2s ease}
+.sd-title{font-size:16px;font-weight:700;margin-bottom:8px}
+.sd-sub{font-size:12px;color:var(--text2);margin-bottom:24px}
+.sd-btns{display:flex;gap:8px;justify-content:center}
+.sd-btn{flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:4px}
+.sd-btn:hover{background:var(--surface3);border-color:var(--accent)}
+.sd-btn .icon{font-size:20px}
+.sd-cancel{flex:none;width:60px;padding:12px;background:transparent;color:var(--text3);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:11px;font-family:'Inter',sans-serif}
+.sd-cancel:hover{background:rgba(255,255,255,.04)}
+.term{background:#0a0c14;padding:12px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;height:100%;overflow-y:auto;color:var(--text)}
+.term-line{margin-bottom:2px;display:flex;gap:8px}
+.term-prompt{color:var(--accent3);white-space:nowrap}
+.term-cmd{color:var(--text)}
+.term-out{color:var(--text2)}
+.term-err{color:var(--danger)}
+.term-input{background:transparent;border:none;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;flex:1;caret-color:var(--accent3)}
+.fm{display:flex;height:100%}
+.fm-sidebar{width:150px;background:rgba(0,0,0,.2);border-right:1px solid var(--border);padding:8px;overflow-y:auto;flex-shrink:0}
+.fm-nav{padding:6px 10px;border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;margin-bottom:2px}
+.fm-nav:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.fm-nav.active{background:rgba(108,92,231,.12);color:var(--accent2)}
+.fm-main{flex:1;display:flex;flex-direction:column}
+.fm-toolbar{height:34px;display:flex;align-items:center;padding:0 8px;gap:4px;border-bottom:1px solid rgba(255,255,255,.03)}
+.fm-tool{height:26px;padding:0 8px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:10px;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s}
+.fm-tool:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.fm-path{flex:1;height:26px;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:0 8px;color:var(--text);font-size:11px;font-family:'JetBrains Mono',monospace;outline:none}
+.fm-body{flex:1;display:flex;overflow:hidden}
+.fm-grid{flex:1;padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;align-content:start;overflow-y:auto}
+.fm-item{padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:5px;border-radius:8px;cursor:pointer;transition:background .15s}
+.fm-item:hover{background:rgba(255,255,255,.04)}
+.fm-item.selected{background:rgba(108,92,231,.15)}
+.fm-item-i{font-size:26px}
+.fm-item-n{font-size:9px;color:var(--text2);text-align:center;word-break:break-all;line-height:1.3;max-height:2.6em;overflow:hidden}
+.fm-preview{width:200px;background:rgba(0,0,0,.15);border-left:1px solid var(--border);padding:12px;overflow-y:auto;flex-shrink:0}
+.fm-preview-title{font-size:11px;font-weight:600;color:var(--text);margin-bottom:8px}
+.fm-preview-info{font-size:10px;color:var(--text3);line-height:1.6}
+.fm-preview-content{margin-top:8px;font-size:10px;color:var(--text2);font-family:'JetBrains Mono',monospace;background:var(--surface);border-radius:6px;padding:8px;white-space:pre-wrap;max-height:200px;overflow-y:auto;line-height:1.5}
+.ed{display:flex;flex-direction:column;height:100%}
+.ed-toolbar{height:34px;display:flex;align-items:center;padding:0 8px;gap:4px;border-bottom:1px solid rgba(255,255,255,.03);flex-shrink:0}
+.ed-tool{height:26px;padding:0 8px;border-radius:5px;border:none;background:transparent;color:var(--text2);font-size:10px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .15s}
+.ed-tool:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.ed-area{flex:1;width:100%;background:transparent;border:none;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;padding:12px;resize:none;outline:none;tab-size:2}
+.calc{display:flex;flex-direction:column;height:100%;padding:12px;gap:6px}
+.calc-display{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:right;min-height:70px;display:flex;flex-direction:column;justify-content:flex-end}
+.calc-expr{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;min-height:16px;word-break:break-all}
+.calc-result{font-size:30px;font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace;word-break:break-all}
+.calc-mem{display:flex;gap:4px;margin-bottom:4px}
+.calc-mem-btn{flex:1;padding:4px;border:none;border-radius:4px;background:var(--surface);color:var(--text3);font-size:9px;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:background .15s}
+.calc-mem-btn:hover{background:var(--surface3);color:var(--text2)}
+.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;flex:1}
+.calc-btn{border:none;border-radius:8px;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;background:var(--surface2);color:var(--text);border:1px solid transparent}
+.calc-btn:hover{background:var(--surface3);border-color:var(--border)}
+.calc-btn:active{transform:scale(.95)}
+.calc-btn.op{color:var(--accent2);background:rgba(108,92,231,.08)}
+.calc-btn.op:hover{background:rgba(108,92,231,.15)}
+.calc-btn.eq{background:linear-gradient(135deg,#6c5ce7,#4ecdc4);color:#fff}
+.calc-btn.clear{color:var(--danger);background:rgba(255,107,107,.06)}
+.br{display:flex;flex-direction:column;height:100%}
+.br-tabs{display:flex;gap:2px;padding:4px 8px 0;background:rgba(0,0,0,.15);flex-shrink:0}
+.br-tab{height:28px;padding:0 12px;border-radius:6px 6px 0 0;border:none;background:transparent;color:var(--text3);font-size:10px;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.br-tab.active{background:var(--surface2);color:var(--text)}
+.br-tab-close{width:14px;height:14px;border-radius:3px;border:none;background:transparent;color:var(--text3);font-size:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.br-tab-close:hover{background:rgba(255,107,107,.2);color:var(--danger)}
+.br-newtab{width:28px;height:28px;border-radius:6px;border:none;background:transparent;color:var(--text3);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.br-newtab:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.br-toolbar{height:34px;display:flex;align-items:center;padding:0 8px;gap:6px;border-bottom:1px solid rgba(255,255,255,.03);flex-shrink:0}
+.br-nav{width:28px;height:28px;border-radius:6px;border:none;background:transparent;color:var(--text2);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.br-nav:hover{background:rgba(255,255,255,.06)}
+.br-url{flex:1;height:28px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0 10px;color:var(--text);font-size:11px;font-family:'JetBrains Mono',monospace;outline:none;transition:border-color .2s}
+.br-url:focus{border-color:var(--accent)}
+.br-frame{flex:1;background:#fff;border:none}
+.mon{padding:12px;display:flex;flex-direction:column;gap:8px;height:100%;overflow-y:auto}
+.mon-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px}
+.mon-card-title{font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.mon-val{font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.mon-bar{height:5px;background:var(--surface3);border-radius:3px;margin-top:6px;overflow:hidden}
+.mon-bar-fill{height:100%;border-radius:3px;transition:width .5s}
+.mon-row{display:flex;gap:8px}
+.mon-row .mon-card{flex:1}
+.mon-chart{height:50px;display:flex;align-items:flex-end;gap:1px;margin-top:6px}
+.mon-chart div{flex:1;background:var(--accent);border-radius:1px 1px 0 0;min-height:1px;transition:height .3s}
+.set{display:flex;height:100%}
+.set-nav{width:140px;background:rgba(0,0,0,.2);border-right:1px solid var(--border);padding:8px;overflow-y:auto;flex-shrink:0}
+.set-item{padding:7px 10px;border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;transition:all .15s;margin-bottom:2px}
+.set-item:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.set-item.active{background:rgba(108,92,231,.12);color:var(--accent2)}
+.set-main{flex:1;padding:16px;overflow-y:auto}
+.set-section{margin-bottom:16px}
+.set-label{font-size:10px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.set-row span{font-size:11px;color:var(--text2)}
+.set-toggle{width:34px;height:18px;border-radius:9px;background:var(--surface3);border:none;cursor:pointer;position:relative;transition:background .2s}
+.set-toggle.on{background:var(--accent)}
+.set-toggle::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .2s}
+.set-toggle.on::after{transform:translateX(16px)}
+.wp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.wp-opt{aspect-ratio:16/10;border-radius:8px;border:2px solid var(--border);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3)}
+.wp-opt:hover{border-color:var(--accent);transform:scale(1.03)}
+.wp-opt.active{border-color:var(--accent);box-shadow:0 0 12px rgba(108,92,231,.3)}
+.mu{display:flex;flex-direction:column;height:100%;padding:16px;gap:10px}
+.mu-art{width:100%;aspect-ratio:1;max-width:200px;margin:0 auto;border-radius:14px;background:linear-gradient(135deg,var(--surface2),var(--surface3));display:flex;align-items:center;justify-content:center;font-size:56px;border:1px solid var(--border)}
+.mu-info{text-align:center}
+.mu-title{font-size:13px;font-weight:700}
+.mu-artist{font-size:10px;color:var(--text3);margin-top:2px}
+.mu-progress{display:flex;align-items:center;gap:8px}
+.mu-time{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace;width:36px}
+.mu-bar{flex:1;height:4px;background:var(--surface3);border-radius:2px;cursor:pointer}
+.mu-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent3));border-radius:2px;width:0%;transition:width .1s}
+.mu-controls{display:flex;align-items:center;justify-content:center;gap:14px}
+.mu-btn{width:34px;height:34px;border-radius:50%;border:none;background:transparent;color:var(--text);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.mu-btn:hover{background:rgba(255,255,255,.06)}
+.mu-btn.play{width:42px;height:42px;background:var(--accent);color:#fff;font-size:17px}
+.mu-list{flex:1;overflow-y:auto}
+.mu-track{display:flex;align-items:center;gap:8px;padding:7px;border-radius:6px;cursor:pointer;transition:background .15s}
+.mu-track:hover{background:rgba(255,255,255,.04)}
+.mu-track.active{background:rgba(108,92,231,.1)}
+.mu-track-n{font-size:10px;color:var(--text2)}
+.mu-track-dur{font-size:9px;color:var(--text3);margin-left:auto}
+.gal{display:flex;flex-direction:column;height:100%}
+.gal-grid{flex:1;padding:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;overflow-y:auto}
+.gal-thumb{aspect-ratio:1;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:all .15s}
+.gal-thumb:hover{border-color:var(--accent);transform:scale(1.03)}
+.gal-view{position:absolute;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;font-size:80px;z-index:5;cursor:pointer}
+.clk{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px}
+.clk-time{font-size:60px;font-weight:800;font-family:'JetBrains Mono',monospace;background:linear-gradient(135deg,var(--accent2),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.clk-date{font-size:13px;color:var(--text2)}
+.wth{padding:16px;display:flex;flex-direction:column;align-items:center;gap:10px;height:100%}
+.wth-icon{font-size:56px}
+.wth-temp{font-size:44px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.wth-desc{font-size:13px;color:var(--text2)}
+.wth-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;width:100%;margin-top:8px}
+.wth-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.wth-card-l{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
+.wth-card-v{font-size:16px;font-weight:700;margin-top:3px}
+.notes{display:flex;height:100%}
+.notes-list{width:160px;background:rgba(0,0,0,.2);border-right:1px solid var(--border);overflow-y:auto;padding:8px;flex-shrink:0}
+.notes-item{padding:7px 10px;border-radius:6px;cursor:pointer;transition:background .15s;margin-bottom:2px}
+.notes-item:hover{background:rgba(255,255,255,.04)}
+.notes-item.active{background:rgba(108,92,231,.12)}
+.notes-item-t{font-size:10px;color:var(--text);font-weight:500}
+.notes-item-p{font-size:8px;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.notes-editor{flex:1;display:flex;flex-direction:column}
+.notes-textarea{flex:1;background:transparent;border:none;color:var(--text);font-size:12px;line-height:1.7;padding:12px;resize:none;outline:none;font-family:'Inter',sans-serif}
+.cal{padding:14px;display:flex;flex-direction:column;gap:10px;height:100%}
+.cal-header{display:flex;align-items:center;justify-content:space-between}
+.cal-title{font-size:15px;font-weight:700}
+.cal-nav{display:flex;gap:4px}
+.cal-nav button{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:10px;transition:all .15s}
+.cal-nav button:hover{background:rgba(255,255,255,.06)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.cal-dh{font-size:8px;color:var(--text3);padding:4px 0;font-weight:600;text-transform:uppercase}
+.cal-day{padding:6px 2px;border-radius:5px;font-size:10px;color:var(--text2);cursor:pointer;transition:background .15s}
+.cal-day:hover{background:rgba(255,255,255,.04)}
+.cal-day.today{background:var(--accent);color:#fff;font-weight:700}
+.cal-day.other{color:var(--text3);opacity:.4}
+.cal-events{border-top:1px solid var(--border);padding-top:6px}
+.cal-event{padding:5px 8px;border-radius:5px;font-size:10px;margin-bottom:3px;display:flex;align-items:center;gap:5px}
+.cal-event-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.codeed{display:flex;flex-direction:column;height:100%}
+.codeed-toolbar{height:32px;display:flex;align-items:center;padding:0 8px;gap:4px;border-bottom:1px solid rgba(255,255,255,.03)}
+.codeed-main{flex:1;display:flex;overflow:hidden}
+.codeed-gutter{width:36px;background:rgba(0,0,0,.2);padding:10px 0;text-align:right;overflow:hidden;flex-shrink:0}
+.codeed-gutter div{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);line-height:1.7;padding:0 6px}
+.codeed-area{flex:1;background:transparent;border:none;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;padding:10px;resize:none;outline:none;tab-size:2}
+.codeed-status{height:20px;padding:0 8px;display:flex;align-items:center;gap:10px;font-size:8px;color:var(--text3);border-top:1px solid rgba(255,255,255,.03);background:rgba(0,0,0,.15)}
+.proc{display:flex;flex-direction:column;height:100%}
+.proc-header{height:34px;display:flex;align-items:center;padding:0 10px;gap:6px;border-bottom:1px solid rgba(255,255,255,.03);flex-shrink:0}
+.proc-list{flex:1;overflow-y:auto;padding:8px}
+.proc-row{display:grid;grid-template-columns:50px 1fr 80px 60px;gap:8px;padding:6px 8px;border-radius:5px;font-size:10px;color:var(--text2);align-items:center;transition:background .15s}
+.proc-row:hover{background:rgba(255,255,255,.03)}
+.proc-row.head{color:var(--text3);font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);border-radius:0}
+.proc-row .kill{color:var(--danger);cursor:pointer;background:none;border:none;font-size:10px;font-family:'Inter',sans-serif}
+.proc-row .kill:hover{text-decoration:underline}
+.clipboard-panel{position:fixed;bottom:52px;right:8px;width:300px;max-height:400px;background:var(--glass2);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:var(--radius2);box-shadow:var(--shadow);z-index:9998;display:none;overflow:hidden}
+.clipboard-panel.open{display:block;animation:su .2s ease}
+.clip-item{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.03);font-size:10px;color:var(--text2);cursor:pointer;transition:background .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clip-item:hover{background:rgba(255,255,255,.04)}
+#ctxMenu{position:fixed;z-index:10000;background:var(--glass2);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:8px;padding:4px;min-width:150px;display:none;box-shadow:var(--shadow)}
+#ctxMenu.open{display:block;animation:su .15s ease}
+.ctx-item{padding:5px 10px;border-radius:5px;font-size:11px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .1s}
+.ctx-item:hover{background:rgba(108,92,231,.12);color:var(--text)}
+.ctx-sep{height:1px;background:var(--border);margin:3px 8px}
+.notif{position:fixed;top:16px;right:16px;z-index:9999;background:var(--glass2);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:10px;padding:10px 14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:8px;animation:ni .3s ease;max-width:280px}
+@keyframes ni{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes nowPlaying{0%,100%{opacity:1}50%{opacity:.5}}
+.mu-art.playing{animation:nowPlaying 2s ease-in-out infinite}
+.mu-art{transition:transform .3s,box-shadow .3s}
+.notif.hide{opacity:0;transform:translateX(20px);transition:all .3s}
+#volumeBtn{width:28px;height:28px;border-radius:6px;border:none;background:transparent;color:var(--text2);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;position:relative}
+#volumeBtn:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.vol-popup{position:absolute;bottom:36px;right:0;background:var(--glass2);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:8px;padding:10px;width:40px;display:none;z-index:1001}
+.vol-popup.show{display:flex;flex-direction:column;align-items:center;gap:6px;animation:su .15s ease}
+.vol-level{font-size:10px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+.iopanel{padding:12px;display:flex;flex-direction:column;height:100%;gap:10px}
+.iogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:6px;flex-shrink:0}
+.iocard{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px;transition:border-color .15s}
+.iocard:hover{border-color:var(--accent)}
+.iohead{display:flex;align-items:center;justify-content:space-between}
+.ioicon{font-size:18px}
+.iostat{width:7px;height:7px;border-radius:50%}
+.iostat.on{background:var(--success)}
+.iostat.off{background:var(--text3)}
+.ioname{font-size:11px;font-weight:600;color:var(--text)}
+.iotype{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.ioevents{font-size:9px;color:var(--accent2);font-family:'JetBrains Mono',monospace}
+.iotoggle{width:32px;height:16px;border-radius:8px;border:none;cursor:pointer;position:relative;transition:background .2s;margin-top:4px}
+.iotoggle.on{background:var(--accent)}
+.iotoggle.off{background:var(--surface3)}
+.iotoggle::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:transform .2s}
+.iotoggle.on::after{transform:translateX(16px)}
+.iovol{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.iovol-label{font-size:10px;color:var(--text2)}
+.iovol-slider{flex:1;height:4px;border-radius:2px;-webkit-appearance:none;appearance:none;background:var(--surface3);outline:none}
+.iovol-slider::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--accent);cursor:pointer}
+.iolog{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.iolog-head{padding:6px 10px;font-size:10px;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border)}
+.iolog-list{flex:1;overflow-y:auto;padding:4px}
+.iolog-item{padding:3px 8px;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);display:flex;gap:6px;border-radius:3px}
+.iolog-item:nth-child(odd){background:rgba(255,255,255,.02)}
+.iolog-time{color:var(--text3);white-space:nowrap}
+.iolog-dev{color:var(--accent2);min-width:55px}
+.iolog-ev{color:var(--text2)}
+.win-resize{position:absolute;bottom:0;right:0;width:16px;height:16px;cursor:nwse-resize;z-index:2}
+.win-resize::before{content:'';position:absolute;bottom:3px;right:3px;width:8px;height:8px;border-right:2px solid var(--border2);border-bottom:2px solid var(--border2)}
+.window.focused .win-titlebar{background:rgba(108,92,231,.04)}
+.window.focused .win-title{color:var(--text)}
+.tapp.active{box-shadow:0 0 12px rgba(108,92,231,.2)}
+*::-webkit-scrollbar{width:5px;height:5px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:transparent;border-radius:3px;transition:background .3s}
+*:hover::-webkit-scrollbar-thumb{background:var(--border)}
+[data-tip]{position:relative}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:5px;font-size:9px;color:var(--text2);white-space:nowrap;pointer-events:none;z-index:9999;animation:tipIn .15s ease}
+@keyframes tipIn{from{opacity:0;transform:translateX(-50%) translateY(4px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.sys-icon{font-size:11px;cursor:pointer;padding:3px 5px;border-radius:4px;transition:background .15s}
+.sys-icon:hover{background:rgba(255,255,255,.04)}
+.fm-search{width:140px;height:26px;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:0 8px;color:var(--text);font-size:10px;font-family:'Inter',sans-serif;outline:none}
+.fm-search:focus{border-color:var(--accent)}
+.ed-findbar{height:32px;display:flex;align-items:center;padding:0 8px;gap:4px;background:var(--surface);border-bottom:1px solid var(--border)}
+.ed-findbar input{height:24px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:0 6px;color:var(--text);font-size:10px;font-family:'JetBrains Mono',monospace;outline:none;width:120px}
+.calc-history{max-height:80px;overflow-y:auto;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text3);padding:4px 8px;border-top:1px solid var(--border)}
+.calc-history-item{padding:2px 0;cursor:pointer;transition:color .15s}
+.calc-history-item:hover{color:var(--text2)}
+.wth-forecast{display:flex;gap:6px;width:100%;margin-top:8px}
+.wth-fc{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center}
+.wth-fc-day{font-size:9px;color:var(--text3)}
+.wth-fc-icon{font-size:20px;margin:4px 0}
+.wth-fc-temp{font-size:13px;font-weight:700}
+.notes-status{height:22px;padding:0 10px;display:flex;align-items:center;font-size:9px;color:var(--text3);border-top:1px solid rgba(255,255,255,.03)}
+.cal-today{padding:4px 10px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--accent2);font-size:10px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .15s}
+.cal-today:hover{background:rgba(108,92,231,.1)}
+.window.snapping{transition:all .3s cubic-bezier(.16,1,.3,1)}
+.mu-wave{display:flex;align-items:center;justify-content:center;gap:3px;height:30px;margin:8px 0}
+.mu-wave-bar{width:3px;background:var(--accent);border-radius:2px;transition:height .1s}
+.mu-wave.playing .mu-wave-bar{animation:waveAnim .8s ease-in-out infinite}
+.mu-wave-bar:nth-child(1){animation-delay:0s}.mu-wave-bar:nth-child(2){animation-delay:.05s}.mu-wave-bar:nth-child(3){animation-delay:.1s}.mu-wave-bar:nth-child(4){animation-delay:.15s}.mu-wave-bar:nth-child(5){animation-delay:.2s}.mu-wave-bar:nth-child(6){animation-delay:.25s}.mu-wave-bar:nth-child(7){animation-delay:.3s}.mu-wave-bar:nth-child(8){animation-delay:.35s}.mu-wave-bar:nth-child(9){animation-delay:.4s}.mu-wave-bar:nth-child(10){animation-delay:.45s}.mu-wave-bar:nth-child(11){animation-delay:.5s}.mu-wave-bar:nth-child(12){animation-delay:.55s}
+@keyframes waveAnim{0%,100%{height:4px}50%{height:24px}}
+.proc-head{cursor:pointer;user-select:none}
+.proc-head:hover{color:var(--text2)}
+.proc-row .status-sleep{color:var(--text3)}
+.notif{cursor:pointer}
+.cal-header{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.ai{display:flex;flex-direction:column;height:100%}
+.ai-agents{display:flex;gap:4px;padding:8px;border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0}
+.ai-agent-btn{padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:10px;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:all .15s}
+.ai-agent-btn:hover{background:rgba(255,255,255,.04)}
+.ai-agent-btn.active{border-color:var(--accent);background:rgba(108,92,231,.1);color:var(--text)}
+.ai-agent-btn .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.ai-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.ai-msg{max-width:85%;padding:10px 14px;border-radius:12px;font-size:12px;line-height:1.6;white-space:pre-wrap;animation:msgIn .2s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.ai-msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.ai-msg.agent{align-self:flex-start;background:var(--surface);border:1px solid var(--border);border-bottom-left-radius:4px}
+.ai-msg .agent-badge{display:flex;align-items:center;gap:4px;font-size:9px;font-weight:600;margin-bottom:4px;opacity:.7}
+.ai-input-wrap{display:flex;gap:6px;padding:8px 12px;border-top:1px solid var(--border);flex-shrink:0}
+.ai-input{flex:1;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0 12px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+.ai-input:focus{border-color:var(--accent)}
+.ai-send{width:36px;height:36px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.ai-send:hover{filter:brightness(1.1)}
+.ai-status{height:22px;padding:0 12px;display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text3);border-top:1px solid rgba(255,255,255,.03);flex-shrink:0}
+.ai-status-dot{width:5px;height:5px;border-radius:50%;background:var(--success);animation:pu 2s infinite}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.4}}
+.ping{display:flex;flex-direction:column;height:100%;padding:12px;gap:10px}
+.ping-target{display:flex;gap:6px;align-items:center}
+.ping-input{flex:1;height:32px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0 10px;color:var(--text);font-size:11px;font-family:'JetBrains Mono',monospace;outline:none}
+.ping-input:focus{border-color:var(--accent)}
+.ping-btn{height:32px;padding:0 14px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-size:11px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .15s}
+.ping-btn:hover{filter:brightness(1.1)}
+.ping-btn:disabled{opacity:.5;cursor:not-allowed}
+.ping-results{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2);overflow-y:auto;line-height:1.6}
+.ping-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ping-stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.ping-stat-val{font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.ping-stat-lbl{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.ping-chart{height:60px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px;display:flex;align-items:flex-end;gap:2px}
+.ping-chart-bar{flex:1;background:var(--accent);border-radius:2px 2px 0 0;min-height:2px;transition:height .2s}
+</style>
+</head>
+<body>
+<div id="boot"><div class="boot-logo">HAZOOM OS</div><div class="boot-sub">System Loading</div><div class="boot-bar"><div class="boot-fill" id="bootFill"></div></div><div class="boot-status" id="bootStatus">Initializing kernel...</div></div>
+<div id="lockScreen"><div class="lock-avatar">👤</div><div class="lock-time" id="lockTime">00:00</div><div class="lock-date" id="lockDate"></div><div class="lock-input-wrap"><input type="password" class="lock-input" id="lockInput" placeholder="PIN" maxlength="8"><div class="lock-hint">Press Enter or type PIN to unlock</div></div></div>
+<div id="desktop"><div id="wallpaper"></div><div id="desktop-icons"></div></div>
+<div id="taskbar" style="display:none"><button id="startBtn" title="Start" data-tip="Start Menu (Meta)">⬡</button><div id="taskApps"></div><div id="sysTray"><span class="sys-icon" id="wifiTray" data-tip="WiFi Connected">📶</span><span class="sys-icon" id="battTray" data-tip="Battery 87%">🔋</span><span class="systr" id="cpuTray">CPU --</span><span class="systr" id="memTray">MEM --</span><button id="volumeBtn" title="Volume" data-tip="Volume">🔊</button><div class="vol-popup" id="volPopup"><div class="vol-level" id="volLevel">100%</div></div><div id="clock" data-tip="Notifications"></div></div></div>
+<div id="startMenu"><div class="sm-search"><input type="text" placeholder="Search apps..." id="smSearch"></div><div class="sm-grid" id="smGrid"></div><div class="sm-footer"><span>HAZOOM OS v2.0</span><button class="sm-power" id="powerBtn" title="Shutdown">⏻</button></div></div>
+<div id="ctxMenu"></div>
+<div id="altTab"></div>
+<div id="notifCenter"><div class="nc-head"><span>Notifications</span><button class="nc-clear" onclick="clearNotifs()">Clear</button></div><div class="nc-list" id="ncList"><div class="nc-empty">No notifications</div></div></div>
+<div id="shutdownDlg"><div class="sd-box"><div class="sd-title">Power Options</div><div class="sd-sub">What would you like to do?</div><div class="sd-btns"><div class="sd-btn" onclick="doShutdown('sleep')"><span class="icon">🌙</span>Sleep</div><div class="sd-btn" onclick="doShutdown('restart')"><span class="icon">🔄</span>Restart</div><div class="sd-btn" onclick="doShutdown('shutdown')"><span class="icon">⏻</span>Shut Down</div><button class="sd-cancel" onclick="closeShutdown()">Cancel</button></div></div></div>
+<div class="snap-ind" id="snapInd"></div>
+<div class="clipboard-panel" id="clipPanel"></div>
+
+<script>
+(function(){
+"use strict";
+
+const VFS = {
+  "/": { type: "dir", children: ["home", "etc", "usr", "tmp", "var"] },
+  "/home": { type: "dir", children: ["user"] },
+  "/home/user": { type: "dir", children: ["Documents", "Pictures", "Music", "Downloads", ".bashrc"] },
+  "/home/user/Documents": { type: "dir", children: ["notes.txt", "todo.md", "report.pdf"] },
+  "/home/user/Documents/notes.txt": { type: "file", content: "Meeting notes for today.\n- Review Q3 targets\n- Update deployment pipeline\n- Fix auth token refresh", size: 89 },
+  "/home/user/Documents/todo.md": { type: "file", content: "# TODO\n- [ ] Buy groceries\n- [x] Write report\n- [ ] Fix bug #42\n- [x] Deploy v2.0", size: 67 },
+  "/home/user/Documents/report.pdf": { type: "file", content: "[Binary file: PDF document]", size: 24576 },
+  "/home/user/Pictures": { type: "dir", children: ["wallpaper.png", "screenshot.jpg", "avatar.png"] },
+  "/home/user/Pictures/wallpaper.png": { type: "file", content: "[Binary file: PNG image]", size: 102400 },
+  "/home/user/Pictures/screenshot.jpg": { type: "file", content: "[Binary file: JPEG image]", size: 85760 },
+  "/home/user/Pictures/avatar.png": { type: "file", content: "[Binary file: PNG image]", size: 12800 },
+  "/home/user/Music": { type: "dir", children: ["ambient.mp3", "chill.wav"] },
+  "/home/user/Music/ambient.mp3": { type: "file", content: "[Binary file: MP3 audio]", size: 3456000 },
+  "/home/user/Music/chill.wav": { type: "file", content: "[Binary file: WAV audio]", size: 10240000 },
+  "/home/user/Downloads": { type: "dir", children: ["setup.sh", "archive.zip"] },
+  "/home/user/Downloads/setup.sh": { type: "file", content: "#!/bin/bash\necho 'Installing HAZOOM OS...'", size: 128 },
+  "/home/user/Downloads/archive.zip": { type: "file", content: "[Binary file: ZIP archive]", size: 524288 },
+  "/home/user/.bashrc": { type: "file", content: "export PS1='\\u@hazoom:\\w$ '\nalias ll='ls -la'\nalias gs='git status'", size: 72 },
+  "/etc": { type: "dir", children: ["hostname", "passwd", "hosts"] },
+  "/etc/hostname": { type: "file", content: "hazoom-os", size: 9 },
+  "/etc/passwd": { type: "file", content: "root:x:0:0:root:/root:/bin/bash\nuser:x:1000:1000:user:/home/user:/bin/bash", size: 78 },
+  "/etc/hosts": { type: "file", content: "127.0.0.1 localhost\n::1 localhost\n127.0.1.1 hazoom-os", size: 52 },
+  "/usr": { type: "dir", children: ["bin", "lib", "share"] },
+  "/usr/bin": { type: "dir", children: [] },
+  "/usr/lib": { type: "dir", children: [] },
+  "/usr/share": { type: "dir", children: [] },
+  "/tmp": { type: "dir", children: [] },
+  "/var": { type: "dir", children: ["log"] },
+  "/var/log": { type: "dir", children: ["syslog"] },
+  "/var/log/syslog": { type: "file", content: "[2026-09-01 00:00:00] System boot complete\n[2026-09-01 00:00:01] All services started", size: 96 }
+};
+
+function fsLs(path) {
+  const node = VFS[path];
+  if (!node || node.type !== "dir") return null;
+  return node.children.slice();
+}
+function fsRead(path) {
+  const node = VFS[path];
+  if (!node || node.type !== "file") return null;
+  return node.content;
+}
+function fsMkdir(path) {
+  const parts = path.replace(/\/$/, "").split("/");
+  const name = parts.pop();
+  const parentPath = parts.join("/") || "/";
+  const parent = VFS[parentPath];
+  if (!parent || parent.type !== "dir") return false;
+  if (parent.children.includes(name)) return false;
+  parent.children.push(name);
+  VFS[path] = { type: "dir", children: [] };
+  return true;
+}
+function fsTouch(path) {
+  const parts = path.replace(/\/$/, "").split("/");
+  const name = parts.pop();
+  const parentPath = parts.join("/") || "/";
+  const parent = VFS[parentPath];
+  if (!parent || parent.type !== "dir") return false;
+  if (!parent.children.includes(name)) parent.children.push(name);
+  if (!VFS[path]) VFS[path] = { type: "file", content: "", size: 0 };
+  return true;
+}
+function fsWrite(path, content) {
+  const node = VFS[path];
+  if (node) { node.content = content; node.size = content.length; return true; }
+  return fsTouch(path) && (VFS[path] = { type: "file", content, size: content.length }, true);
+}
+function fsRm(path) {
+  const parts = path.replace(/\/$/, "").split("/");
+  const name = parts.pop();
+  const parentPath = parts.join("/") || "/";
+  const parent = VFS[parentPath];
+  if (!parent || !parent.children.includes(name)) return false;
+  parent.children = parent.children.filter(c => c !== name);
+  delete VFS[path];
+  return true;
+}
+function fsExists(path) { return !!VFS[path]; }
+function fsIsDir(path) { return VFS[path] && VFS[path].type === "dir"; }
+function fsParent(path) {
+  const parts = path.replace(/\/$/, "").split("/");
+  parts.pop();
+  return parts.join("/") || "/";
+}
+
+const APPS = [
+  { id: "terminal", name: "Terminal", icon: ">_", w: 650, h: 420 },
+  { id: "filemanager", name: "Files", icon: "📁", w: 700, h: 480 },
+  { id: "texteditor", name: "Text Editor", icon: "📝", w: 600, h: 440 },
+  { id: "codeeditor", name: "Code Editor", icon: "💻", w: 680, h: 480 },
+  { id: "calculator", name: "Calculator", icon: "🔢", w: 300, h: 440 },
+  { id: "browser", name: "Browser", icon: "🌐", w: 800, h: 540 },
+  { id: "sysmonitor", name: "System Monitor", icon: "📊", w: 550, h: 460 },
+  { id: "processmgr", name: "Process Manager", icon: "⚙️", w: 520, h: 420 },
+  { id: "settings", name: "Settings", icon: "🔧", w: 620, h: 460 },
+  { id: "music", name: "Music", icon: "🎵", w: 340, h: 480 },
+  { id: "gallery", name: "Gallery", icon: "🖼️", w: 560, h: 440 },
+  { id: "clock", name: "Clock", icon: "🕐", w: 320, h: 300 },
+  { id: "weather", name: "Weather", icon: "🌤️", w: 380, h: 420 },
+  { id: "notes", name: "Notes", icon: "📋", w: 520, h: 420 },
+  { id: "calendar", name: "Calendar", icon: "📅", w: 380, h: 400 },
+  { id: "diskusage", name: "Disk Usage", icon: "💿", w: 400, h: 380 },
+  { id: "iopanel", name: "I/O Panel", icon: "🔌", color: "#00b894", w: 520, h: 450 },
+  { id: "ai", name: "AI Agent", icon: "🧠", color: "#6c5ce7", cat: "System", w: 520, h: 520 },
+  { id: "ping", name: "Ping Test", icon: "📡", color: "#00b894", cat: "System", w: 480, h: 420 }
+];
+
+const WALLPAPERS = [
+  { name: "Midnight", bg: "linear-gradient(135deg, #0a0c14, #1a1e2e)" },
+  { name: "Ocean", bg: "linear-gradient(135deg, #0c2340, #1a4b7a)" },
+  { name: "Forest", bg: "linear-gradient(135deg, #0a2e1a, #1a5a3a)" },
+  { name: "Sunset", bg: "linear-gradient(135deg, #2d1b4e, #e65100)" },
+  { name: "Nebula", bg: "linear-gradient(135deg, #1a0a3e, #6c5ce7, #4ecdc4)" },
+  { name: "Aurora", bg: "linear-gradient(135deg, #0a1428, #4ecdc4, #6c5ce7)" },
+  { name: "Lava", bg: "linear-gradient(135deg, #1a0a0a, #ff6b6b, #feca57)" },
+  { name: "Arctic", bg: "linear-gradient(135deg, #e8ecf4, #a29bfe, #6c5ce7)" }
+];
+
+let windows = [], winIdCounter = 0, focusedWinId = null, zIndexCounter = 100;
+let notifications = [], clipboardHistory = [], notifIdCounter = 0;
+let dragState = null, resizeState = null, altTabIndex = -1, altTabVisible = false;
+let cpuHistory = new Array(40).fill(0), memHistory = new Array(40).fill(0);
+  let calcExpr = "0", calcResult = "", calcHasResult = false, calcMemory = 0, calcHistory = [];
+let calMonth, calYear, calEvents = {};
+let notesList = [{ id: 1, title: "Note 1", text: "" }], noteIdCounter = 2, activeNoteId = 1;
+let browserTabs = [{ id: 1, url: "https://en.wikipedia.org", title: "Wikipedia" }], browserTabId = 1;
+  let fmPath = "/home/user", fmSelected = null;
+  let fmSortField = "name", fmSortDir = "asc", fmSearchTerm = "";
+let codeLineCount = 1;
+let termHistory = [], termHistIdx = -1;
+let shellEnv = { HOME: "/home/user", USER: "user", SHELL: "/bin/bash", PATH: "/usr/bin", PS1: "\\u@hazoom:\\w$ " };
+let shellAliases = { ll: "ls -la", la: "ls -a", gs: "git status", gp: "git push", gc: "git commit" };
+let processList = [];
+
+// ═══ HOVER SOUND EFFECTS ═══
+const HOVER_SFX = {
+  ctx: null,
+  volume: 0.15,
+  init() { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+  tick() {
+    if (!this.ctx) return;
+    try { if (this.ctx.state === 'suspended') this.ctx.resume(); } catch(e) {}
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = 'sine';
+    o.frequency.value = 2400 + Math.random() * 400;
+    g.gain.setValueAtTime(this.volume * 0.3, this.ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
+    o.connect(g); g.connect(this.ctx.destination);
+    o.start(); o.stop(this.ctx.currentTime + 0.04);
+  },
+  menuHover() {
+    if (!this.ctx) return;
+    try { if (this.ctx.state === 'suspended') this.ctx.resume(); } catch(e) {}
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = 'sine';
+    o.frequency.value = 1800;
+    g.gain.setValueAtTime(this.volume * 0.2, this.ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.03);
+    o.connect(g); g.connect(this.ctx.destination);
+    o.start(); o.stop(this.ctx.currentTime + 0.03);
+  },
+  keyUp() {
+    if (!this.ctx) return;
+    try { if (this.ctx.state === 'suspended') this.ctx.resume(); } catch(e) {}
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(600, this.ctx.currentTime);
+    o.frequency.linearRampToValueAtTime(900, this.ctx.currentTime + 0.05);
+    g.gain.setValueAtTime(this.volume * 0.4, this.ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.06);
+    o.connect(g); g.connect(this.ctx.destination);
+    o.start(); o.stop(this.ctx.currentTime + 0.06);
+  },
+  keyDown() {
+    if (!this.ctx) return;
+    try { if (this.ctx.state === 'suspended') this.ctx.resume(); } catch(e) {}
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(900, this.ctx.currentTime);
+    o.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.05);
+    g.gain.setValueAtTime(this.volume * 0.4, this.ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.06);
+    o.connect(g); g.connect(this.ctx.destination);
+    o.start(); o.stop(this.ctx.currentTime + 0.06);
+  },
+  activate() {
+    if (!this.ctx) return;
+    try { if (this.ctx.state === 'suspended') this.ctx.resume(); } catch(e) {}
+    [800, 1200].forEach((f, i) => {
+      const o = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      o.type = 'sine';
+      o.frequency.value = f;
+      g.gain.setValueAtTime(this.volume * 0.3, this.ctx.currentTime + i * 0.06);
+      g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + i * 0.06 + 0.08);
+      o.connect(g); g.connect(this.ctx.destination);
+      o.start(this.ctx.currentTime + i * 0.06);
+      o.stop(this.ctx.currentTime + i * 0.06 + 0.08);
+    });
+  }
+};
+
+// ═══ PROCEDURAL MUSIC SYNTHESIZER ═══
+const MUSIC = {
+  ctx: null,
+  playing: false,
+  current: 0,
+  volume: 0.3,
+  nodes: [],
+  startTime: 0,
+  elapsed: 0,
+  progressTimer: null,
+  looping: false,
+
+  tracks: [
+    {
+      name: "Midnight's Dream", icon: "🌙", duration: "4:32", durationSec: 272,
+      bpm: 65, key: 'Dm',
+      notes: [146.83, 164.81, 174.61, 196.00, 220.00, 233.08, 261.63],
+      bass: [73.42, 82.41, 87.31, 98.00],
+      type: 'ambient'
+    },
+    {
+      name: 'Synthwave Dreams', icon: '🎹', duration: '3:42', durationSec: 222,
+      bpm: 110, key: 'Am',
+      notes: [220.00, 246.94, 261.63, 293.66, 329.63, 349.23, 392.00],
+      bass: [110.00, 123.47, 130.81, 146.83],
+      type: 'synthwave'
+    },
+    {
+      name: 'Ambient Horizon', icon: '🌊', duration: '5:15', durationSec: 315,
+      bpm: 50, key: 'Cmaj',
+      notes: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88],
+      bass: [130.81, 146.83, 164.81, 174.61],
+      type: 'ambient'
+    },
+    {
+      name: 'Lo-Fi Sunset', icon: '🌅', duration: '3:58', durationSec: 238,
+      bpm: 85, key: 'Fmaj',
+      notes: [174.61, 196.00, 220.00, 233.08, 261.63, 293.66, 329.63],
+      bass: [87.31, 98.00, 110.00, 116.54],
+      type: 'lofi'
+    },
+    {
+      name: 'Neon Pulse', icon: '💜', duration: '4:10', durationSec: 250,
+      bpm: 128, key: 'Em',
+      notes: [164.81, 185.00, 196.00, 220.00, 246.94, 261.63, 293.66],
+      bass: [82.41, 92.50, 98.00, 110.00],
+      type: 'electronic'
+    },
+    {
+      name: 'Crystal Cave', icon: '💎', duration: '6:00', durationSec: 360,
+      bpm: 55, key: 'Bbm',
+      notes: [233.08, 261.63, 277.18, 311.13, 349.23, 370.00, 415.30],
+      bass: [116.54, 130.81, 138.59, 155.56],
+      type: 'ambient'
+    },
+    {
+      name: 'Digital Rain', icon: '🌧', duration: '4:45', durationSec: 285,
+      bpm: 75, key: 'Gm',
+      notes: [196.00, 220.00, 233.08, 261.63, 293.66, 311.13, 349.23],
+      bass: [98.00, 110.00, 116.54, 130.81],
+      type: 'ambient'
+    },
+    {
+      name: 'Solar Flare', icon: '☀', duration: '3:30', durationSec: 210,
+      bpm: 120, key: 'Dmaj',
+      notes: [293.66, 329.63, 369.99, 392.00, 440.00, 493.88, 523.25],
+      bass: [146.83, 164.81, 185.00, 196.00],
+      type: 'electronic'
+    }
+  ],
+
+  init() {
+    try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  },
+
+  _ensureCtx() {
+    if (!this.ctx) this.init();
+    if (!this.ctx) return false;
+    try { if (this.ctx.state === 'suspended') this.ctx.resume(); } catch(e) {}
+    return true;
+  },
+
+  play(trackIdx) {
+    if (!this._ensureCtx()) return;
+    this.stop();
+    if (trackIdx !== undefined) this.current = trackIdx;
+    this.playing = true;
+    this.startTime = Date.now();
+    this.elapsed = 0;
+    this.looping = true;
+    this._generateTrack(this.tracks[this.current]);
+    this._startProgress();
+  },
+
+  stop() {
+    this.playing = false;
+    this.looping = false;
+    this.nodes.forEach(n => { try { n.stop(); } catch(e) {} });
+    this.nodes = [];
+    if (this.progressTimer) { clearInterval(this.progressTimer); this.progressTimer = null; }
+  },
+
+  pause() {
+    if (!this.playing) return;
+    this.playing = false;
+    this.looping = false;
+    this.nodes.forEach(n => { try { n.stop(); } catch(e) {} });
+    this.nodes = [];
+    if (this.progressTimer) { clearInterval(this.progressTimer); this.progressTimer = null; }
+  },
+
+  next() {
+    this.current = (this.current + 1) % this.tracks.length;
+    if (this.playing || this.elapsed > 0) this.play(this.current);
+  },
+
+  prev() {
+    this.current = (this.current - 1 + this.tracks.length) % this.tracks.length;
+    if (this.playing || this.elapsed > 0) this.play(this.current);
+  },
+
+  _startProgress() {
+    if (this.progressTimer) clearInterval(this.progressTimer);
+    this.progressTimer = setInterval(() => {
+      if (!this.playing) return;
+      this.elapsed = (Date.now() - this.startTime) / 1000;
+      if (this.elapsed >= this.tracks[this.current].durationSec) {
+        if (this.looping) {
+          this.nodes.forEach(n => { try { n.stop(); } catch(e) {} });
+          this.nodes = [];
+          this.startTime = Date.now();
+          this.elapsed = 0;
+          this._generateTrack(this.tracks[this.current]);
+          window._renderMusicUI && window._renderMusicUI();
+        }
+      }
+      window._renderMusicUI && window._renderMusicUI();
+    }, 250);
+  },
+
+  _generateTrack(track) {
+    switch (track.type) {
+      case 'ambient': this.generateAmbient(track); break;
+      case 'synthwave': this.generateSynthwave(track); break;
+      case 'lofi': this.generateLofi(track); break;
+      case 'electronic': this.generateElectronic(track); break;
+    }
+  },
+
+  generateAmbient(track) {
+    const ctx = this.ctx;
+    const vol = this.volume;
+    const beatLen = 60 / track.bpm;
+    const now = ctx.currentTime;
+    const totalBeats = Math.floor(track.durationSec / beatLen);
+
+    for (let i = 0; i < Math.min(totalBeats, 600); i++) {
+      const t = now + i * beatLen;
+      if (t > now + track.durationSec) break;
+
+      const noteIdx = Math.floor(Math.random() * track.notes.length);
+      const freq = track.notes[noteIdx];
+
+      // Pad oscillator 1
+      const o1 = ctx.createOscillator();
+      const o1g = ctx.createGain();
+      o1.type = 'sine';
+      o1.frequency.value = freq;
+      o1.detune.value = Math.random() * 6 - 3;
+      o1g.gain.setValueAtTime(0, t);
+      o1g.gain.linearRampToValueAtTime(vol * 0.08, t + beatLen * 1.5);
+      o1g.gain.linearRampToValueAtTime(0, t + beatLen * 4);
+
+      // Pad oscillator 2 (detuned for chorus)
+      const o2 = ctx.createOscillator();
+      const o2g = ctx.createGain();
+      o2.type = 'sine';
+      o2.frequency.value = freq;
+      o2.detune.value = Math.random() * 6 + 3;
+      o2g.gain.setValueAtTime(0, t);
+      o2g.gain.linearRampToValueAtTime(vol * 0.06, t + beatLen * 1.8);
+      o2g.gain.linearRampToValueAtTime(0, t + beatLen * 4.5);
+
+      // Low-pass filter
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 800;
+      filter.Q.value = 1;
+
+      o1.connect(o1g); o1g.connect(filter);
+      o2.connect(o2g); o2g.connect(filter);
+      filter.connect(ctx.destination);
+
+      o1.start(t); o1.stop(t + beatLen * 5);
+      o2.start(t); o2.stop(t + beatLen * 5);
+      this.nodes.push(o1, o2);
+
+      // Bass note every 4 beats
+      if (i % 4 === 0) {
+        const bassFreq = track.bass[Math.floor(Math.random() * track.bass.length)];
+        const bassO = ctx.createOscillator();
+        const bassG = ctx.createGain();
+        bassO.type = 'sine';
+        bassO.frequency.value = bassFreq;
+        bassG.gain.setValueAtTime(vol * 0.12, t);
+        bassG.gain.exponentialRampToValueAtTime(0.001, t + beatLen * 4);
+        bassO.connect(bassG); bassG.connect(ctx.destination);
+        bassO.start(t); bassO.stop(t + beatLen * 4);
+        this.nodes.push(bassO);
+      }
+    }
+  },
+
+  generateSynthwave(track) {
+    const ctx = this.ctx;
+    const vol = this.volume;
+    const beatLen = 60 / track.bpm;
+    const now = ctx.currentTime;
+    const totalBeats = Math.floor(track.durationSec / beatLen);
+
+    // Pulsing bass pattern
+    const bassPattern = [1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,0];
+    // Arpeggio pattern
+    const arpPattern = [0,2,4,2,4,6,4,2,0,1,3,1,3,5,3,1];
+
+    for (let i = 0; i < Math.min(totalBeats, 600); i++) {
+      const t = now + i * beatLen;
+      if (t > now + track.durationSec) break;
+      const beat = i % 16;
+
+      // Sawtooth lead (every other beat with arpeggio)
+      if (beat % 2 === 0) {
+        const arpIdx = arpPattern[beat];
+        const freq = track.notes[arpIdx % track.notes.length];
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 2000 + Math.sin(i * 0.1) * 1000;
+        filter.Q.value = 2;
+        o.type = 'sawtooth';
+        o.frequency.value = freq;
+        g.gain.setValueAtTime(vol * 0.07, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + beatLen * 1.8);
+        o.connect(g); g.connect(filter); filter.connect(ctx.destination);
+        o.start(t); o.stop(t + beatLen * 2);
+        this.nodes.push(o);
+      }
+
+      // Square bass
+      if (bassPattern[beat]) {
+        const bassFreq = track.bass[i % track.bass.length];
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'square';
+        o.frequency.value = bassFreq;
+        g.gain.setValueAtTime(vol * 0.1, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + beatLen * 0.8);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(t); o.stop(t + beatLen);
+        this.nodes.push(o);
+      }
+
+      // Kick drum simulation every 4 beats
+      if (i % 4 === 0) {
+        const kick = ctx.createOscillator();
+        const kickG = ctx.createGain();
+        kick.type = 'sine';
+        kick.frequency.setValueAtTime(150, t);
+        kick.frequency.exponentialRampToValueAtTime(40, t + 0.12);
+        kickG.gain.setValueAtTime(vol * 0.3, t);
+        kickG.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        kick.connect(kickG); kickG.connect(ctx.destination);
+        kick.start(t); kick.stop(t + 0.25);
+        this.nodes.push(kick);
+      }
+    }
+  },
+
+  generateLofi(track) {
+    const ctx = this.ctx;
+    const vol = this.volume;
+    const beatLen = 60 / track.bpm;
+    const now = ctx.currentTime;
+    const totalBeats = Math.floor(track.durationSec / beatLen);
+    const swing = beatLen * 0.15;
+
+    // Chord shapes (indices into notes array)
+    const chordShapes = [[0,2,4],[1,3,5],[0,3,5],[2,4,6]];
+
+    for (let i = 0; i < Math.min(totalBeats, 600); i++) {
+      const t = now + i * beatLen;
+      if (t > now + track.durationSec) break;
+      const beat = i % 16;
+
+      // Warm triangle chords (every 4 beats)
+      if (beat % 4 === 0) {
+        const chord = chordShapes[Math.floor(i / 4) % chordShapes.length];
+        chord.forEach((noteIdx, ci) => {
+          const freq = track.notes[noteIdx % track.notes.length];
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.value = 1200;
+          filter.Q.value = 0.5;
+          o.type = 'triangle';
+          o.frequency.value = freq;
+          g.gain.setValueAtTime(0, t + ci * 0.02);
+          g.gain.linearRampToValueAtTime(vol * 0.06, t + 0.1);
+          g.gain.linearRampToValueAtTime(vol * 0.04, t + beatLen * 3);
+          g.gain.exponentialRampToValueAtTime(0.001, t + beatLen * 4);
+          o.connect(g); g.connect(filter); filter.connect(ctx.destination);
+          o.start(t + ci * 0.02); o.stop(t + beatLen * 4.5);
+          this.nodes.push(o);
+        });
+      }
+
+      // Swung hi-hat noise-like ticks
+      if (beat % 2 === 1) {
+        const ht = t + swing;
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.value = 6000 + Math.random() * 2000;
+        g.gain.setValueAtTime(vol * 0.02, ht);
+        g.gain.exponentialRampToValueAtTime(0.001, ht + 0.02);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(ht); o.stop(ht + 0.03);
+        this.nodes.push(o);
+      }
+
+      // Kick on 1 and 9
+      if (beat === 0 || beat === 8) {
+        const kick = ctx.createOscillator();
+        const kickG = ctx.createGain();
+        kick.type = 'sine';
+        kick.frequency.setValueAtTime(120, t);
+        kick.frequency.exponentialRampToValueAtTime(30, t + 0.15);
+        kickG.gain.setValueAtTime(vol * 0.2, t);
+        kickG.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+        kick.connect(kickG); kickG.connect(ctx.destination);
+        kick.start(t); kick.stop(t + 0.2);
+        this.nodes.push(kick);
+      }
+
+      // Subtle bass (triangle)
+      if (beat === 0 || beat === 6) {
+        const bassFreq = track.bass[i % track.bass.length];
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'triangle';
+        o.frequency.value = bassFreq;
+        g.gain.setValueAtTime(vol * 0.1, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + beatLen * 2);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(t); o.stop(t + beatLen * 2.5);
+        this.nodes.push(o);
+      }
+    }
+  },
+
+  generateElectronic(track) {
+    const ctx = this.ctx;
+    const vol = this.volume;
+    const beatLen = 60 / track.bpm;
+    const now = ctx.currentTime;
+    const totalBeats = Math.floor(track.durationSec / beatLen);
+    const sixteenth = beatLen / 4;
+
+    // Arpeggio patterns
+    const arpSeq = [0,4,2,5,1,6,3,5,0,4,2,5,1,6,3,5];
+
+    for (let i = 0; i < Math.min(totalBeats, 600); i++) {
+      const t = now + i * beatLen;
+      if (t > now + track.durationSec) break;
+
+      // 16th note arpeggios (square wave)
+      for (let s = 0; s < 4; s++) {
+        const st = t + s * sixteenth;
+        const arpIdx = (i * 4 + s) % arpSeq.length;
+        const noteIdx = arpSeq[arpIdx] % track.notes.length;
+        const freq = track.notes[noteIdx];
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'square';
+        o.frequency.value = freq;
+        g.gain.setValueAtTime(vol * 0.04, st);
+        g.gain.exponentialRampToValueAtTime(0.001, st + sixteenth * 0.7);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(st); o.stop(st + sixteenth);
+        this.nodes.push(o);
+      }
+
+      // Kick drum every beat with sidechain ducking
+      if (i % 1 === 0) {
+        const kick = ctx.createOscillator();
+        const kickG = ctx.createGain();
+        kick.type = 'sine';
+        kick.frequency.setValueAtTime(180, t);
+        kick.frequency.exponentialRampToValueAtTime(35, t + 0.1);
+        kickG.gain.setValueAtTime(vol * 0.25, t);
+        kickG.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+        kick.connect(kickG); kickG.connect(ctx.destination);
+        kick.start(t); kick.stop(t + 0.2);
+        this.nodes.push(kick);
+      }
+
+      // Driving bass (square)
+      if (i % 2 === 0) {
+        const bassFreq = track.bass[i % track.bass.length];
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'square';
+        o.frequency.value = bassFreq;
+        g.gain.setValueAtTime(vol * 0.08, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + beatLen * 1.5);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(t); o.stop(t + beatLen * 2);
+        this.nodes.push(o);
+      }
+
+      // Hi-hat on off-beats
+      if (i % 2 === 1) {
+        const hatT = t + sixteenth;
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.value = 7000 + Math.random() * 1000;
+        g.gain.setValueAtTime(vol * 0.025, hatT);
+        g.gain.exponentialRampToValueAtTime(0.001, hatT + 0.015);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(hatT); o.stop(hatT + 0.02);
+        this.nodes.push(o);
+      }
+    }
+  },
+
+  getElapsedFormatted() {
+    const sec = Math.floor(this.elapsed);
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
+};
+
+// ═══ SOUND ENGINE ═══
+let audioCtx = null;
+const SFX = {
+  volume: 0.7,
+  _ctx: null,
+  _init() {
+    if (!this._ctx) {
+      this._ctx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx = this._ctx;
+    }
+    if (this._ctx.state === 'suspended') this._ctx.resume();
+  },
+  setVolume(v) {
+    this.volume = Math.max(0, Math.min(1, v));
+    const dev = IO.devices.find(d => d.id === 'speaker');
+    if (dev) dev.volume = Math.round(v * 100);
+  },
+  play(name) {
+    try { this._init(); } catch(e) { return; }
+    if (!this._ctx) return;
+    const ctx = this._ctx;
+    const vol = this.volume;
+    const defs = {
+      boot:     { type: 'sine', f0: 200, f1: 800, dur: 0.5, vol: 1 },
+      click:    { type: 'sine', f: 600, dur: 0.03, vol: 0.5 },
+      open:     { type: 'sine', f0: 400, f1: 600, dur: 0.1, vol: 0.5, two: true },
+      close:    { type: 'sine', f0: 600, f1: 300, dur: 0.08, vol: 0.5 },
+      minimize: { type: 'sine', f0: 500, f1: 200, dur: 0.06, vol: 0.5 },
+      maximize: { type: 'sine', f0: 300, f1: 600, dur: 0.08, vol: 0.5 },
+      snap:     { type: 'sine', f: 800, dur: 0.02, vol: 0.5 },
+      notify:   { type: 'sine', f0: 800, f1: 1000, dur: 0.15, vol: 0.5, two: true },
+      error:    { type: 'square', f: 150, dur: 0.2, vol: 0.3 },
+      type:     { type: 'sine', f: 1200, dur: 0.01, vol: 0.25 },
+      hover:    { type: 'sine', f: 400, dur: 0.015, vol: 0.15 },
+      startup:  { type: 'sine', notes: [262, 330, 392], dur: 0.2, vol: 0.5, chord: true },
+      shutdown: { type: 'sine', notes: [392, 330, 262], dur: 0.2, vol: 0.5, chord: true },
+      alert:    { type: 'sine', f: 1000, dur: 0.05, vol: 0.5, repeat: 3 },
+      delete:   { type: 'sine', f0: 500, f1: 200, dur: 0.04, vol: 0.5 },
+      create:   { type: 'sine', f0: 400, f1: 800, dur: 0.06, vol: 0.5 },
+      copy:     { type: 'sine', f0: 800, f1: 1200, dur: 0.05, vol: 0.5 },
+      paste:    { type: 'sine', f0: 1200, f1: 800, dur: 0.05, vol: 0.5 },
+      volume:   { type: 'sine', f: 1000, dur: 0.015, vol: 0.4 }
+    };
+    const d = defs[name];
+    if (!d) return;
+    function playTone(f0, f1, dur, type, v) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const t = ctx.currentTime;
+      if (f0 !== f1) {
+        osc.frequency.setValueAtTime(f0, t);
+        osc.frequency.linearRampToValueAtTime(f1, t + dur);
+      } else {
+        osc.frequency.setValueAtTime(f0, t);
+      }
+      gain.gain.setValueAtTime(v * vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      osc.start(t);
+      osc.stop(t + dur + 0.01);
+    }
+    if (d.chord) {
+      d.notes.forEach((freq, i) => {
+        setTimeout(() => playTone(freq, freq, d.dur, d.type, d.vol), i * d.dur * 1000 * 0.9);
+      });
+    } else if (d.repeat) {
+      for (let i = 0; i < d.repeat; i++) {
+        setTimeout(() => playTone(d.f, d.f, d.dur, d.type, d.vol), i * d.dur * 2 * 1000);
+      }
+    } else if (d.two) {
+      playTone(d.f0, d.f0, d.dur, d.type, d.vol);
+      setTimeout(() => playTone(d.f1, d.f1, d.dur, d.type, d.vol), d.dur * 1000);
+    } else {
+      const f0 = d.f !== undefined ? d.f : d.f0;
+      const f1 = d.f1 !== undefined ? d.f1 : f0;
+      playTone(f0, f1, d.dur, d.type, d.vol);
+    }
+  }
+};
+window.SFX = SFX;
+
+function initAudioOnInteraction() {
+  const handler = () => { SFX._init(); document.removeEventListener('click', handler); document.removeEventListener('keydown', handler); };
+  document.addEventListener('click', handler);
+  document.addEventListener('keydown', handler);
+}
+
+// ═══ I/O PERIPHERALS SYSTEM ═══
+const IO = {
+  devices: [
+    { id: 'keyboard', name: 'Keyboard', type: 'input', status: 'active', icon: '⌨', events: 0 },
+    { id: 'mouse', name: 'Mouse', type: 'input', status: 'active', icon: '🖱', events: 0 },
+    { id: 'display', name: 'Display', type: 'output', status: 'active', icon: '🖥', info: innerWidth + '×' + innerHeight },
+    { id: 'speaker', name: 'Speaker', type: 'output', status: 'active', icon: '🔊', volume: 80 },
+    { id: 'microphone', name: 'Microphone', type: 'input', status: 'inactive', icon: '🎤' },
+    { id: 'camera', name: 'Camera', type: 'input', status: 'inactive', icon: '📷' },
+    { id: 'usb1', name: 'USB Drive', type: 'storage', status: 'inactive', icon: '💾', size: '16 GB' },
+    { id: 'network', name: 'Network', type: 'network', status: 'active', icon: '🌐', ip: '192.168.1.42' },
+    { id: 'gpu', name: 'GPU', type: 'output', status: 'active', icon: '⚡', info: 'WebGL 2.0' },
+    { id: 'audio', name: 'Audio Device', type: 'output', status: 'active', icon: '🎵', info: '44.1kHz Stereo' }
+  ],
+  logs: [],
+  log(device, event) {
+    this.logs.unshift({ device, event, time: Date.now() });
+    if (this.logs.length > 100) this.logs.pop();
+    const dev = this.devices.find(d => d.id === device);
+    if (dev) dev.events++;
+  }
+};
+
+function initInputTracking() {
+  document.addEventListener('keydown', () => { IO.log('keyboard', 'Keypress'); });
+  document.addEventListener('click', () => { IO.log('mouse', 'Click'); });
+}
+
+function wrapSpeakerEvents() {
+  const origPlay = SFX.play.bind(SFX);
+  SFX.play = function(name) {
+    origPlay(name);
+    IO.log('speaker', 'Play: ' + name);
+  };
+}
+
+function initVolumeControl() {
+  const volumes = [1, 0.75, 0.5, 0.25, 0];
+  let volIdx = 0;
+  const volLevels = ['100%', '75%', '50%', '25%', '0%'];
+  const btn = document.getElementById('volumeBtn');
+  const popup = document.getElementById('volPopup');
+  const levelEl = document.getElementById('volLevel');
+  let popupTimeout;
+  btn.addEventListener('click', () => {
+    SFX.play('volume');
+    volIdx = (volIdx + 1) % volumes.length;
+    SFX.setVolume(volumes[volIdx]);
+    levelEl.textContent = volLevels[volIdx];
+    popup.classList.add('show');
+    clearTimeout(popupTimeout);
+    popupTimeout = setTimeout(() => popup.classList.remove('show'), 1500);
+  });
+}
+
+function playStartup() { SFX.play('startup'); }
+
+function genProcs() {
+  const names = ["systemd","bash","hazoom-wm","Xwayland","pipewire","pulseaudio","NetworkManager","polkitd","dbus-daemon","thermald","cron","rsyslogd","containerd","dockerd","sshd","nginx","python3","node","vim","top","htop","java","gcc","make"];
+  processList = names.map((n, i) => ({
+    pid: 1000 + i * 37,
+    name: n,
+    cpu: (Math.random() * 15).toFixed(1),
+    mem: (Math.random() * 45 + 5).toFixed(1),
+    status: Math.random() > 0.3 ? "Running" : "Sleeping"
+  }));
+}
+genProcs();
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const desktopEl = () => $("#desktop");
+
+function notify(icon, text) {
+  const n = { id: ++notifIdCounter, icon, text, time: new Date().toLocaleTimeString() };
+  notifications.unshift(n);
+  renderNotifToast(n);
+  renderNotifCenter();
+  IO.log('speaker', 'Notify sound');
+}
+
+function renderNotifToast(n) {
+  const el = document.createElement("div");
+  el.className = "notif";
+  el.innerHTML = `<span>${n.icon}</span><span style="font-size:11px">${n.text}</span>`;
+  el.addEventListener("click", () => { el.classList.add("hide"); setTimeout(() => el.remove(), 400); });
+  document.body.appendChild(el);
+  setTimeout(() => { el.classList.add("hide"); setTimeout(() => el.remove(), 400); }, 3000);
+}
+
+function renderNotifCenter() {
+  const list = $("#ncList");
+  if (!notifications.length) { list.innerHTML = '<div class="nc-empty">No notifications</div>'; return; }
+  list.innerHTML = notifications.map(n => `<div class="nc-item"><div class="nc-item-i">${n.icon}</div><div class="nc-item-t">${n.text}</div><div class="nc-item-time">${n.time}</div></div>`).join("");
+}
+
+window.clearNotifs = function() { notifications = []; renderNotifCenter(); };
+
+function renderDesktopIcons() {
+  const el = $("#desktop-icons");
+  const desktopApps = ["terminal", "filemanager", "browser", "settings", "iopanel", "ai", "ping"];
+  el.innerHTML = desktopApps.map(id => {
+    const app = APPS.find(a => a.id === id);
+    return `<div class="dicon" data-tip="Open ${app.name}" ondblclick="window.openApp('${id}')"><div class="dicon-i">${app.icon}</div><div class="dicon-t">${app.name}</div></div>`;
+  }).join("");
+}
+
+function renderStartMenu(filter = "") {
+  const grid = $("#smGrid");
+  const filtered = APPS.filter(a => a.name.toLowerCase().includes(filter.toLowerCase()));
+  grid.innerHTML = filtered.map(a => `<div class="sm-app" onclick="window.openApp('${a.id}')"><div class="sm-app-i">${a.icon}</div><div class="sm-app-n">${a.name}</div></div>`).join("");
+}
+
+function renderTaskbar() {
+  const el = $("#taskApps");
+  el.innerHTML = windows.map(w => {
+    const app = APPS.find(a => a.id === w.appId);
+    return `<button class="tapp ${w.id === focusedWinId ? 'active' : ''}" data-tip="${w.title}" onclick="window.focusWin(${w.id})">${app ? app.icon : ''} ${w.title}</button>`;
+  }).join("");
+}
+
+function openApp(appId, opts) {
+  const app = APPS.find(a => a.id === appId);
+  if (!app) return;
+  const existing = windows.find(w => w.appId === appId);
+  if (existing && appId !== "terminal") { window.focusWin(existing.id); return; }
+  const id = ++winIdCounter;
+  const w = {
+    id, appId,
+    title: app.name,
+    x: 80 + (windows.length * 20) % 200,
+    y: 40 + (windows.length * 20) % 150,
+    w: app.w, h: app.h,
+    maximized: false, minimized: false,
+    prevRect: null
+  };
+  windows.push(w);
+  const winEl = document.createElement("div");
+  winEl.className = "window opening focused";
+  winEl.id = "win-" + id;
+  winEl.dataset.winId = id;
+  winEl.style.cssText = `left:${w.x}px;top:${w.y}px;width:${w.w}px;height:${w.h}px;z-index:${++zIndexCounter}`;
+  winEl.innerHTML = `<div class="win-titlebar" data-drag="${id}"><div class="win-title"><span class="win-title-icon">${app.icon}</span>${w.title}</div><div class="win-controls"><button class="win-btn" data-tip="Minimize" onclick="window.minimizeWin(${id})" title="Minimize">─</button><button class="win-btn" data-tip="Maximize" onclick="window.maximizeWin(${id})" title="Maximize">□</button><button class="win-btn close" data-tip="Close" onclick="window.closeWin(${id})" title="Close">✕</button></div></div><div class="win-body" id="winBody-${id}"></div><div class="win-status" id="winStatus-${id}">${app.name}</div><div class="win-resize"></div>`;
+  desktopEl().appendChild(winEl);
+  setTimeout(() => winEl.classList.remove("opening"), 300);
+  SFX.play('open');
+  renderAppContent(id, appId, opts);
+  window.focusWin(id);
+  renderTaskbar();
+  setTimeout(() => { document.getElementById("winStatus-" + id); }, 50);
+  notify(app.icon, `${app.name} opened`);
+}
+
+window.openApp = openApp;
+
+window.closeWin = function(id) {
+  SFX.play('close');
+  const winEl = document.getElementById("win-" + id);
+  if (winEl) { winEl.style.transform = "scale(.85)"; winEl.style.opacity = "0"; }
+  setTimeout(() => {
+    if (winEl) winEl.remove();
+    windows = windows.filter(w => w.id !== id);
+    if (focusedWinId === id) { focusedWinId = null; if (windows.length) window.focusWin(windows[windows.length - 1].id); }
+    renderTaskbar();
+  }, 200);
+};
+
+window.minimizeWin = function(id) {
+  SFX.play('minimize');
+  const w = windows.find(w => w.id === id);
+  if (!w) return;
+  const winEl = document.getElementById("win-" + id);
+  if (winEl) { winEl.classList.add("minimizing"); setTimeout(() => { winEl.style.display = "none"; winEl.classList.remove("minimizing"); }, 300); }
+  w.minimized = true;
+  if (focusedWinId === id) { focusedWinId = null; if (windows.length) { const next = windows.find(x => !x.minimized); if (next) window.focusWin(next.id); } }
+  renderTaskbar();
+};
+
+window.maximizeWin = function(id) {
+  SFX.play('maximize');
+  const w = windows.find(w => w.id === id);
+  if (!w) return;
+  const winEl = document.getElementById("win-" + id);
+  if (!winEl) return;
+  if (w.maximized) {
+    winEl.classList.remove("maximized");
+    if (w.prevRect) { winEl.style.left = w.prevRect.x + "px"; winEl.style.top = w.prevRect.y + "px"; winEl.style.width = w.prevRect.w + "px"; winEl.style.height = w.prevRect.h + "px"; w.x = w.prevRect.x; w.y = w.prevRect.y; w.w = w.prevRect.w; w.h = w.prevRect.h; }
+    w.maximized = false;
+  } else {
+    w.prevRect = { x: w.x, y: w.y, w: w.w, h: w.h };
+    winEl.classList.add("maximized");
+    w.maximized = true;
+  }
+};
+
+window.focusWin = function(id) {
+  if (focusedWinId === id) { const w = windows.find(x => x.id === id); if (w && w.minimized) { const winEl = document.getElementById("win-" + id); if (winEl) { winEl.style.display = ""; winEl.classList.add("opening"); setTimeout(() => winEl.classList.remove("opening"), 300); } w.minimized = false; } renderTaskbar(); return; }
+  $$(".window").forEach(el => el.classList.remove("focused"));
+  const winEl = document.getElementById("win-" + id);
+  if (winEl) { winEl.classList.add("focused"); winEl.style.zIndex = ++zIndexCounter; if (winEl.style.display === "none") { winEl.style.display = ""; winEl.classList.add("opening"); setTimeout(() => winEl.classList.remove("opening"), 300); const w = windows.find(x => x.id === id); if (w) w.minimized = false; } }
+  focusedWinId = id;
+  renderTaskbar();
+};
+
+function initDrag() {
+  document.addEventListener("mousedown", e => {
+    const titlebar = e.target.closest(".win-titlebar");
+    if (titlebar && !e.target.closest(".win-controls")) {
+      const id = +titlebar.dataset.drag;
+      const w = windows.find(x => x.id === id);
+      if (!w || w.maximized) return;
+      window.focusWin(id);
+      const winEl = document.getElementById("win-" + id);
+      dragState = { id, startX: e.clientX, startY: e.clientY, origX: w.x, origY: w.y, winEl };
+    }
+  });
+  document.addEventListener("mousemove", e => {
+    if (dragState) {
+      const dx = e.clientX - dragState.startX;
+      const dy = e.clientY - dragState.startY;
+      const nx = dragState.origX + dx;
+      const ny = dragState.origY + dy;
+      const w = windows.find(x => x.id === dragState.id);
+      if (w) { w.x = nx; w.y = Math.max(0, ny); dragState.winEl.style.left = w.x + "px"; dragState.winEl.style.top = w.y + "px"; }
+      const snap = $("#snapInd");
+      if (e.clientX <= 4) { snap.style.cssText = "display:block;left:4px;top:4px;width:calc(50% - 8px);height:calc(100% - 52px)"; }
+      else if (e.clientX >= window.innerWidth - 4) { snap.style.cssText = "display:block;left:calc(50% + 4px);top:4px;width:calc(50% - 8px);height:calc(100% - 52px)"; }
+      else if (e.clientY <= 4) { snap.style.cssText = "display:block;left:4px;top:4px;width:calc(100% - 8px);height:calc(100% - 52px)"; }
+      else { snap.style.display = "none"; }
+    }
+  });
+  document.addEventListener("mouseup", e => {
+    if (dragState) {
+      const snap = $("#snapInd");
+      if (e.clientX <= 4) { const w = windows.find(x => x.id === dragState.id); if (w) { w.prevRect = { x: w.x, y: w.y, w: w.w, h: w.h }; w.x = 0; w.y = 0; w.w = window.innerWidth / 2; w.h = window.innerHeight - 44; const winEl = document.getElementById("win-" + w.id); winEl.classList.add("snapping"); winEl.style.left = "0"; winEl.style.top = "0"; winEl.style.width = "50%"; winEl.style.height = "calc(100% - 44px)"; SFX.play('snap'); setTimeout(() => winEl.classList.remove("snapping"), 300); } }
+      else if (e.clientX >= window.innerWidth - 4) { const w = windows.find(x => x.id === dragState.id); if (w) { w.prevRect = { x: w.x, y: w.y, w: w.w, h: w.h }; w.x = window.innerWidth / 2; w.y = 0; w.w = window.innerWidth / 2; w.h = window.innerHeight - 44; const winEl = document.getElementById("win-" + w.id); winEl.classList.add("snapping"); winEl.style.left = "50%"; winEl.style.top = "0"; winEl.style.width = "50%"; winEl.style.height = "calc(100% - 44px)"; SFX.play('snap'); setTimeout(() => winEl.classList.remove("snapping"), 300); } }
+      else if (e.clientY <= 4) { window.maximizeWin(dragState.id); }
+      snap.style.display = "none";
+      dragState = null;
+    }
+  });
+}
+
+function initContextMenu() {
+  const ctx = $("#ctxMenu");
+  document.addEventListener("contextmenu", e => {
+    e.preventDefault();
+    const dicon = e.target.closest(".dicon");
+    if (dicon) {
+      const appName = dicon.querySelector(".dicon-t").textContent;
+      const appId = dicon.getAttribute("ondblclick")?.match(/openApp\('(\w+)'\)/)?.[1];
+      ctx.innerHTML = `<div class="ctx-item" onclick="window.openApp('${appId}');SFX.play('click')">📂 Open</div><div class="ctx-sep"></div><div class="ctx-item" onclick="notify('📋', 'Rename: Select and type new name (not implemented yet)');SFX.play('click')">✏️ Rename</div><div class="ctx-sep"></div><div class="ctx-item" onclick="this.closest('.dicon')?.remove();notify('🗑️', '${appName} removed from desktop');SFX.play('delete')">🗑️ Delete</div>`;
+    } else {
+      ctx.innerHTML = `<div class="ctx-item" onclick="window.openApp('terminal');SFX.play('click')">📁 Open Terminal</div><div class="ctx-item" onclick="window.openApp('filemanager');SFX.play('click')">📂 Open File Manager</div><div class="ctx-sep"></div><div class="ctx-item" onclick="window.openApp('settings');SFX.play('click')">⚙️ Settings</div><div class="ctx-item" onclick="showShutdown()">⏻ Power</div>`;
+    }
+    ctx.className = "open";
+    ctx.style.left = Math.min(e.clientX, window.innerWidth - 170) + "px";
+    ctx.style.top = Math.min(e.clientY, window.innerHeight - 120) + "px";
+  });
+  document.addEventListener("click", e => { if (!ctx.contains(e.target)) ctx.classList.remove("open"); });
+}
+
+function initAltTab() {
+  document.addEventListener("keydown", e => {
+    if (e.altKey && e.key === "Tab") {
+      e.preventDefault();
+      if (!altTabVisible) { altTabVisible = true; altTabIndex = 0; showAltTab(); }
+      else { altTabIndex = (altTabIndex + 1) % windows.length; showAltTab(); }
+      SFX.play('click');
+    }
+    if (e.key === "Control" && e.code === "ShiftLeft") {
+      e.preventDefault();
+      toggleClipboard();
+    }
+    if (e.ctrlKey && e.key === "c" && !window.getSelection().toString()) {
+      // clipboard capture handled elsewhere
+    }
+  });
+  document.addEventListener("keyup", e => {
+    if (e.key === "Alt" && altTabVisible) {
+      altTabVisible = false;
+      const altEl = $("#altTab");
+      altEl.classList.remove("show");
+      if (windows[altTabIndex]) window.focusWin(windows[altTabIndex].id);
+    }
+  });
+}
+
+function showAltTab() {
+  const altEl = $("#altTab");
+  altEl.innerHTML = windows.map((w, i) => {
+    const app = APPS.find(a => a.id === w.appId);
+    return `<div class="alt-tab-item ${i === altTabIndex ? 'sel' : ''}"><div class="alt-tab-icon">${app ? app.icon : '?'}</div><div class="alt-tab-name">${w.title}</div></div>`;
+  }).join("");
+  altEl.classList.add("show");
+}
+
+function initLockScreen() {
+  const input = $("#lockInput");
+  let time = 0;
+  function updateLockTime() {
+    const now = new Date();
+    $("#lockTime").textContent = now.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" });
+    $("#lockDate").textContent = now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  }
+  updateLockTime();
+  setInterval(updateLockTime, 1000);
+  input.addEventListener("input", () => { if (input.value.length >= 4) unlockSystem(); });
+  input.addEventListener("keydown", e => { if (e.key === "Enter") unlockSystem(); });
+}
+
+function unlockSystem() {
+  SFX.play('startup');
+  $("#lockScreen").classList.add("done");
+  setTimeout(() => { $("#lockScreen").style.display = "none"; }, 800);
+  $("#taskbar").style.display = "flex";
+  renderDesktopIcons();
+  renderStartMenu();
+  notify("🔓", "System unlocked");
+  BG.init();
+  startAmbientAI();
+}
+
+function initBoot() {
+  const msgs = ["Loading kernel modules...", "Initializing display...", "Mounting filesystems...", "Starting services...", "Loading desktop..."];
+  let i = 0;
+  const fill = $("#bootFill");
+  const status = $("#bootStatus");
+  const interval = setInterval(() => {
+    if (i < msgs.length) { status.textContent = msgs[i]; fill.style.width = ((i + 1) / msgs.length * 100) + "%"; i++; }
+    else { clearInterval(interval); SFX.play('boot'); $("#boot").classList.add("done"); setTimeout(() => { $("#boot").style.display = "none"; initLockScreen(); }, 1200); }
+  }, 400);
+}
+
+function initStartMenu() {
+  const startBtn = $("#startBtn");
+  const menu = $("#startMenu");
+  startBtn.addEventListener("click", e => {
+    e.stopPropagation();
+    SFX.play('click');
+    menu.classList.toggle("open");
+    $("#smSearch").value = "";
+    renderStartMenu();
+  });
+  document.addEventListener("click", e => { if (!menu.contains(e.target) && e.target !== startBtn) menu.classList.remove("open"); });
+  $("#smSearch").addEventListener("input", e => renderStartMenu(e.target.value));
+  $("#powerBtn").addEventListener("click", () => { menu.classList.remove("open"); showShutdown(); });
+}
+
+function initClock() {
+  function updateClock() {
+    const now = new Date();
+    const time = now.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const h = parseInt(now.getHours() * 25 + Math.random() * 20 + 20);
+    const m = parseInt(Math.random() * 60 + 20);
+    $("#clock").textContent = time;
+    $("#cpuTray").textContent = "CPU " + h + "%";
+    $("#memTray").textContent = "MEM " + m + "%";
+    cpuHistory.push(h); cpuHistory.shift();
+    memHistory.push(m); memHistory.shift();
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+}
+
+function initShutdown() {
+  window.showShutdown = function() { SFX.play('click'); $("#shutdownDlg").classList.add("show"); };
+  window.closeShutdown = function() { SFX.play('click'); $("#shutdownDlg").classList.remove("show"); };
+  window.doShutdown = function(action) {
+    closeShutdown();
+    if (action === "shutdown") { SFX.play('shutdown'); document.body.style.transition = "opacity 1s"; document.body.style.opacity = "0"; setTimeout(() => { document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#000;color:#5a6580;font-family:Inter,sans-serif;font-size:14px">System halted.</div>'; document.body.style.opacity = "1"; }, 1000); }
+    else if (action === "restart") { SFX.play('shutdown'); document.body.style.opacity = "0"; setTimeout(() => location.reload(), 1000); }
+    else if (action === "sleep") { SFX.play('minimize'); notify("🌙", "System sleeping..."); document.body.style.filter = "brightness(0.1)"; setTimeout(() => document.body.style.filter = "", 2000); }
+  };
+}
+
+function toggleClipboard() {
+  const panel = $("#clipPanel");
+  panel.classList.toggle("open");
+  SFX.play('click');
+  renderClipboard();
+}
+
+function renderClipboard() {
+  const panel = $("#clipPanel");
+  if (!clipboardHistory.length) { panel.innerHTML = '<div style="padding:16px;text-align:center;font-size:11px;color:var(--text3)">No clipboard items</div>'; return; }
+  panel.innerHTML = clipboardHistory.map((item, i) => `<div class="clip-item" onclick="navigator.clipboard.writeText('${item.replace(/'/g, "\\'")}')">${item}</div>`).join("");
+}
+
+document.addEventListener("copy", () => {
+  SFX.play('copy');
+  const sel = window.getSelection().toString();
+  if (sel) { clipboardHistory.unshift(sel); if (clipboardHistory.length > 20) clipboardHistory.pop(); }
+});
+
+function setWallpaper(idx) {
+  const wp = WALLPAPERS[idx];
+  $("#wallpaper").style.background = 'transparent';
+  localStorage.setItem("hazoom-wallpaper", idx);
+}
+
+function initWallpaper() {
+  const saved = parseInt(localStorage.getItem("hazoom-wallpaper")) || 0;
+  setWallpaper(saved);
+}
+
+function renderAppContent(winId, appId, opts) {
+  const body = document.getElementById("winBody-" + winId);
+  const statusEl = document.getElementById("winStatus-" + winId);
+  if (!body) return;
+
+  switch (appId) {
+    case "terminal": renderTerminal(body, statusEl, winId); break;
+    case "filemanager": renderFileManager(body, statusEl, winId); break;
+    case "texteditor": renderTextEditor(body, statusEl, winId, opts); break;
+    case "codeeditor": renderCodeEditor(body, statusEl, winId, opts); break;
+    case "calculator": renderCalculator(body, statusEl, winId); break;
+    case "browser": renderBrowser(body, statusEl, winId); break;
+    case "sysmonitor": renderSysMonitor(body, statusEl, winId); break;
+    case "processmgr": renderProcessMgr(body, statusEl, winId); break;
+    case "settings": renderSettings(body, statusEl, winId); break;
+    case "music": renderMusic(body, statusEl, winId); break;
+    case "gallery": renderGallery(body, statusEl, winId); break;
+    case "clock": renderClockApp(body, statusEl, winId); break;
+    case "weather": renderWeather(body, statusEl, winId); break;
+    case "notes": renderNotes(body, statusEl, winId); break;
+    case "calendar": renderCalendar(body, statusEl, winId); break;
+    case "diskusage": renderDiskUsage(body, statusEl, winId); break;
+    case "iopanel": renderIOPanel(body, statusEl, winId); break;
+    case "ai": renderAI(body, statusEl, winId); break;
+    case "ping": initPing(body, winId); break;
+  }
+}
+
+function renderTerminal(body, statusEl, winId) {
+  let cwd = "/home/user";
+  body.innerHTML = `<div class="term" id="term-${winId}"><div class="term-line"><span class="term-out">HAZOOM OS Terminal v2.0. Type 'help' for commands.</span></div></div>`;
+  if (statusEl) statusEl.textContent = 'Terminal — 💡 Hunter ready to search';
+  const term = document.getElementById("term-" + winId);
+
+  function addLine(prompt, cmd, output, cls) {
+    let html = `<div class="term-line"><span class="term-prompt">${prompt}</span><span class="term-cmd">${cmd}</span></div>`;
+    if (output) { html += `<div class="term-line"><span class="${cls || 'term-out'}">${output}</span></div>`; }
+    term.insertAdjacentHTML("beforeend", html);
+    term.scrollTop = term.scrollHeight;
+  }
+
+  function getPrompt() { return `user@hazoom:${cwd === "/home/user" ? "~" : cwd}$ `; }
+
+  function addInput() {
+    const existing = term.querySelector(".term-input-line");
+    if (existing) existing.remove();
+    const line = document.createElement("div");
+    line.className = "term-line term-input-line";
+    line.innerHTML = `<span class="term-prompt">${getPrompt()}</span><input class="term-input" type="text" autofocus>`;
+    term.appendChild(line);
+    const input = line.querySelector(".term-input");
+    input.focus();
+    input.addEventListener("keydown", e => {
+      SFX.play('type');
+      if (e.key === "Enter") {
+        const cmd = input.value.trim();
+        if (cmd) { termHistory.push(cmd); termHistIdx = termHistory.length; processCommand(cmd); }
+        addInput();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (termHistIdx > 0) { termHistIdx--; input.value = termHistory[termHistIdx]; }
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (termHistIdx < termHistory.length - 1) { termHistIdx++; input.value = termHistory[termHistIdx]; } else { termHistIdx = termHistory.length; input.value = ""; }
+      } else if (e.key === "Tab") {
+        e.preventDefault();
+        const partial = input.value.split(" ").pop();
+        if (partial) {
+          const match = APPS.find(a => a.name.toLowerCase().startsWith(partial.toLowerCase()));
+          if (match) { const parts = input.value.split(" "); parts[parts.length - 1] = match.id; input.value = parts.join(" "); }
+        }
+      } else if (e.key === "c" && e.ctrlKey) {
+        input.value = "";
+        addLine(getPrompt(), "^C", "", "term-err");
+      }
+    });
+  }
+
+  function processCommand(raw) {
+    let pipes = raw.split("|").map(s => s.trim());
+    let lastOutput = null;
+
+    for (let pi = 0; pi < pipes.length; pi++) {
+      let parts = pipes[pi].split(/\s+/);
+      parts = parts.map(p => {
+        if (p.startsWith("$")) { const v = shellEnv[p.slice(1)]; return v !== undefined ? v : p; }
+        if (shellAliases[parts[0]] && pi === 0) return p;
+        return p;
+      });
+      let cmd = parts[0], args = parts.slice(1);
+
+      if (shellAliases[cmd]) { const aliasParts = shellAliases[cmd].split(/\s+/); cmd = aliasParts[0]; args = [...aliasParts.slice(1), ...args]; }
+
+      let output = executeCommand(cmd, args, lastOutput, cwd);
+      lastOutput = output;
+    }
+
+    if (lastOutput !== null) addLine(getPrompt(), raw, lastOutput);
+    else addLine(getPrompt(), raw);
+  }
+
+  function executeCommand(cmd, args, pipeInput, cwd) {
+    switch (cmd) {
+      case "help": return "Available commands: help, ls, cd, pwd, cat, echo, mkdir, touch, rm, ps, kill, df, du, uptime, which, grep, head, tail, wc, sort, env, clear, man, alias, date, whoami, hostname, uname, neofetch, exit";
+      case "ls": { let p = cwd; if (args[0] && args[0] !== "-la" && args[0] !== "-a") { p = args[0].startsWith("/") ? args[0] : cwd + "/" + args[0]; } const items = fsLs(p); if (!items) return `ls: cannot access '${args[0] || p}': No such file or directory`; return items.join("  "); }
+      case "cd": { let target = args[0] || "/home/user"; if (target === "~") target = "/home/user"; if (target.startsWith("~")) target = "/home/user" + target.slice(1); if (!target.startsWith("/")) target = cwd + "/" + target; if (fsIsDir(target)) { cwd = target; return ""; } return `cd: no such file or directory: ${args[0]}`; }
+      case "pwd": return cwd;
+      case "cat": { if (!args[0]) return "cat: missing operand"; let p = args[0].startsWith("/") ? args[0] : cwd + "/" + args[0]; const content = fsRead(p); if (content === null) return `cat: ${args[0]}: No such file or directory`; return content; }
+      case "echo": return args.join(" ");
+      case "mkdir": { if (!args[0]) return "mkdir: missing operand"; let p = args[0].startsWith("/") ? args[0] : cwd + "/" + args[0]; return fsMkdir(p) ? "" : `mkdir: cannot create directory '${args[0]}'`; }
+      case "touch": { if (!args[0]) return "touch: missing operand"; let p = args[0].startsWith("/") ? args[0] : cwd + "/" + args[0]; return fsTouch(p) ? "" : `touch: cannot create '${args[0]}'`; }
+      case "rm": { if (!args[0]) return "rm: missing operand"; let p = args[0].startsWith("/") ? args[0] : cwd + "/" + args[0]; return fsRm(p) ? "" : `rm: cannot remove '${args[0]}'`; }
+      case "ps": return "  PID TTY          TIME CMD\n" + processList.map(p => `${String(p.pid).padStart(6)} pts/0    00:00:00 ${p.name}`).join("\n");
+      case "kill": { if (!args[0]) return "kill: missing operand"; const pid = parseInt(args[0]); processList = processList.filter(p => p.pid !== pid); return `Process ${pid} killed`; }
+      case "df": return "Filesystem     1K-blocks    Used Available Use% Mounted on\n/dev/vda1      102400000 24576000  77824000  24% /\ntmpfs            2048000       0   2048000   0% /tmp";
+      case "du": return "4.0K\t/etc\n12K\t/home/user/Documents\n8.0K\t/home/user/Pictures\n4.0K\t/usr/bin\nTotal disk usage: 28K";
+      case "uptime": { const d = new Date(); return ` ${d.toLocaleTimeString()} up 12 days, 3:42,  1 user,  load average: 0.12, 0.08, 0.05`; }
+      case "which": { const cmds = ["bash", "node", "python3", "gcc", "vim"]; return cmds.filter(c => args.includes(c)).join("\n") || "nothing found"; }
+      case "grep": { if (args.length < 2) return "grep: missing arguments"; const pat = args[0]; const text = args.slice(1).join(" "); const input = pipeInput || text; return input.split("\n").filter(l => l.includes(pat)).join("\n"); }
+      case "head": { const n = args.includes("-n") ? parseInt(args[args.indexOf("-n") + 1]) : 5; const input = pipeInput || "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7"; return input.split("\n").slice(0, n).join("\n"); }
+      case "tail": { const n = args.includes("-n") ? parseInt(args[args.indexOf("-n") + 1]) : 5; const input = pipeInput || "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7"; return input.split("\n").slice(-n).join("\n"); }
+      case "wc": { const input = pipeInput || "word1 word2 word3"; const words = input.split(/\s+/).length; const lines = input.split("\n").length; const chars = input.length; return `  ${lines}  ${words}  ${chars}`; }
+      case "sort": { const input = pipeInput || "banana\napple\ncherry"; return input.split("\n").sort().join("\n"); }
+      case "env": return Object.entries(shellEnv).map(([k, v]) => `${k}=${v}`).join("\n");
+      case "clear": body.innerHTML = ""; return null;
+      case "man": { const manPages = { ls: "ls - list directory contents. Usage: ls [path]", cd: "cd - change working directory. Usage: cd [path]", cat: "cat - concatenate and print files. Usage: cat [file]", grep: "grep - search text. Usage: grep [pattern] [text]", kill: "kill - terminate process. Usage: kill [pid]" }; return manPages[args[0]] || "No manual entry for " + (args[0] || "this"); }
+      case "alias": { if (args[0]) { const [k, ...v] = args.join(" ").split("="); shellAliases[k] = v.join("=").replace(/['"]/g, ""); return `alias ${k}='${shellAliases[k]}'`; } return Object.entries(shellAliases).map(([k, v]) => `alias ${k}='${v}'`).join("\n"); }
+      case "date": return new Date().toString();
+      case "whoami": return "user";
+      case "hostname": return "hazoom-os";
+      case "uname": return args.includes("-a") ? "HAZOOM 2.0.0 hazoom-os x86_64 GNU/Linux" : "HAZOOM";
+      case "neofetch": return "       _____\n      /     \\\n     / HAZOOM \\\n    /  OS v2   \\\n   /____________\\\n   |  user@  |\n   | hazoom-os |\n   |__________|";
+      case "exit": window.closeWin(winId); return "";
+      default: return `${cmd}: command not found`;
+    }
+  }
+
+  addInput();
+
+  body.addEventListener("click", () => { const input = term.querySelector(".term-input:last-of-type"); if (input) input.focus(); });
+}
+
+function renderFileManager(body, statusEl, winId) {
+  let currentPath = "/home/user";
+  let selected = null;
+
+  const sidebar = [
+    { path: "/home/user", label: "🏠 Home" },
+    { path: "/home/user/Documents", label: "📄 Documents" },
+    { path: "/home/user/Pictures", label: "🖼️ Pictures" },
+    { path: "/home/user/Music", label: "🎵 Music" },
+    { path: "/home/user/Downloads", label: "📥 Downloads" },
+    { path: "/", label: "💻 Root" }
+  ];
+
+  body.innerHTML = `<div class="fm"><div class="fm-sidebar" id="fmSb-${winId}">${sidebar.map(s => `<div class="fm-nav ${s.path === currentPath ? 'active' : ''}" data-path="${s.path}">${s.label}</div>`).join("")}</div><div class="fm-main"><div class="fm-toolbar"><button class="fm-tool" id="fmBack-${winId}">◀ Back</button><button class="fm-tool" id="fmUp-${winId}">▲ Up</button><button class="fm-tool" id="fmNew-${winId}">+ New</button><button class="fm-tool" id="fmDel-${winId}">🗑️ Delete</button><button class="fm-tool" data-sort="name" data-dir="asc" id="fmSortName-${winId}">Name ↕</button><button class="fm-tool" data-sort="size" data-dir="asc" id="fmSortSize-${winId}">Size ↕</button><button class="fm-tool" data-sort="type" data-dir="asc" id="fmSortType-${winId}">Type ↕</button><input class="fm-search" placeholder="Search files..." id="fmSearch-${winId}"><input class="fm-path" id="fmPath-${winId}" value="${currentPath}"></div><div class="fm-body"><div class="fm-grid" id="fmGrid-${winId}"></div><div class="fm-preview" id="fmPrev-${winId}"><div class="fm-preview-title">Preview</div><div class="fm-preview-info">Select an item to preview</div></div></div></div>`;
+
+  function render() {
+    let items = fsLs(currentPath) || [];
+    if (fmSearchTerm) {
+      items = items.filter(name => name.toLowerCase().includes(fmSearchTerm.toLowerCase()));
+    }
+    const sortFn = (a, b) => {
+      if (fmSortField === "name") return fmSortDir === "asc" ? a.localeCompare(b) : b.localeCompare(a);
+      if (fmSortField === "size") {
+        const sa = VFS[currentPath + "/" + a]?.size || 0;
+        const sb = VFS[currentPath + "/" + b]?.size || 0;
+        return fmSortDir === "asc" ? sa - sb : sb - sa;
+      }
+      if (fmSortField === "type") {
+        const ta = fsIsDir(currentPath + "/" + a) ? "dir" : "file";
+        const tb = fsIsDir(currentPath + "/" + b) ? "dir" : "file";
+        return fmSortDir === "asc" ? ta.localeCompare(tb) : tb.localeCompare(ta);
+      }
+      return 0;
+    };
+    items.sort(sortFn);
+    const grid = document.getElementById("fmGrid-" + winId);
+    grid.innerHTML = items.map(name => {
+      const path = currentPath === "/" ? "/" + name : currentPath + "/" + name;
+      const isDir = fsIsDir(path);
+      return `<div class="fm-item ${selected === name ? 'selected' : ''}" data-name="${name}"><div class="fm-item-i">${isDir ? '📁' : '📄'}</div><div class="fm-item-n">${name}</div></div>`;
+    }).join("") || '<div style="padding:20px;font-size:11px;color:var(--text3)">Empty directory</div>';
+
+    document.getElementById("fmPath-" + winId).value = currentPath;
+
+    const prev = document.getElementById("fmPrev-" + winId);
+    if (selected) {
+      const path = currentPath === "/" ? "/" + selected : currentPath + "/" + selected;
+      const node = VFS[path];
+      if (node) {
+        prev.innerHTML = `<div class="fm-preview-title">${selected}</div><div class="fm-preview-info">Type: ${node.type}<br>Size: ${node.size || 0} bytes</div>${node.content ? `<div class="fm-preview-content">${escapeHtml(node.content.substring(0, 500))}</div>` : ''}`;
+      }
+    }
+
+    document.querySelectorAll("#fmSb-" + winId + " .fm-nav").forEach(el => {
+      el.classList.toggle("active", el.dataset.path === currentPath);
+    });
+
+    statusEl.textContent = `📁 ${currentPath} (${items.length} items) — 💡 Owl suggests: organize files by type`;
+  }
+
+  body.addEventListener("click", e => {
+    const nav = e.target.closest(".fm-nav");
+    if (nav) { SFX.play('click'); currentPath = nav.dataset.path; selected = null; render(); return; }
+
+    const item = e.target.closest(".fm-item");
+    if (item) {
+      SFX.play('click');
+      selected = item.dataset.name;
+      render();
+      return;
+    }
+  });
+
+  body.addEventListener("dblclick", e => {
+    const item = e.target.closest(".fm-item");
+    if (item) {
+      SFX.play('open');
+      const path = currentPath === "/" ? "/" + item.dataset.name : currentPath + "/" + item.dataset.name;
+      if (fsIsDir(path)) { currentPath = path; selected = null; render(); }
+      else { openApp("texteditor", { filePath: path, fileName: item.dataset.name, content: fsRead(path) || "" }); }
+    }
+  });
+
+  document.getElementById("fmBack-" + winId).addEventListener("click", () => { SFX.play('click'); currentPath = fsParent(currentPath); selected = null; render(); });
+  document.getElementById("fmUp-" + winId).addEventListener("click", () => { SFX.play('click'); currentPath = fsParent(currentPath); selected = null; render(); });
+  document.getElementById("fmNew-" + winId).addEventListener("click", () => { SFX.play('click'); const name = prompt("New file/folder name:"); if (name) { fsTouch(currentPath + "/" + name); SFX.play('create'); render(); } });
+  document.getElementById("fmDel-" + winId).addEventListener("click", () => { SFX.play('click'); if (selected) { if (confirm(`Delete ${selected}?`)) { fsRm(currentPath + "/" + selected); SFX.play('delete'); selected = null; render(); } } });
+
+  const searchEl = document.getElementById("fmSearch-" + winId);
+  searchEl.addEventListener("input", e => { fmSearchTerm = e.target.value; render(); });
+
+  ["Name", "Size", "Type"].forEach(field => {
+    const sortEl = document.getElementById("fmSort" + field + "-" + winId);
+    if (sortEl) {
+      sortEl.addEventListener("click", () => {
+        SFX.play('click');
+        if (fmSortField === field) { fmSortDir = fmSortDir === "asc" ? "desc" : "asc"; }
+        else { fmSortField = field; fmSortDir = "asc"; }
+        render();
+      });
+    }
+  });
+
+  render();
+}
+
+function renderTextEditor(body, statusEl, winId, opts) {
+  let content = opts?.content || "Welcome to HAZOOM Text Editor!\n\nStart typing here...";
+  let fileName = opts?.fileName || "untitled.txt";
+
+  body.innerHTML = `<div class="ed"><div class="ed-toolbar"><button class="ed-tool" id="edSave-${winId}">💾 Save</button><button class="ed-tool" id="edCopy-${winId}">📋 Copy All</button><button class="ed-tool" id="edFind-${winId}">🔍 Find</button><button class="ed-tool" id="edWrap-${winId}">↩ Wrap</button></div><div class="ed-findbar" id="${winId}_findbar" style="display:none"><input placeholder="Find..." id="${winId}_findinput"><input placeholder="Replace..." id="${winId}_replaceinput"><button class="ed-tool" id="${winId}_findbtn">Find</button><button class="ed-tool" id="${winId}_replacebtn">Replace</button><button class="ed-tool" id="${winId}_replaceallbtn">Replace All</button><button class="ed-tool" id="${winId}_closefind">✕</button></div><textarea class="ed-area" id="edArea-${winId}" style="white-space:pre">${escapeHtml(content)}</textarea></div>`;
+
+  const area = document.getElementById("edArea-" + winId);
+  area.addEventListener("input", updateStatus);
+
+  function updateStatus() {
+    const text = area.value;
+    const lines = text.split("\n").length;
+    const pos = area.selectionStart;
+    const before = text.substring(0, pos);
+    const line = before.split("\n").length;
+    const col = pos - before.lastIndexOf("\n");
+    statusEl.textContent = `${fileName} | Lines: ${lines} | Chars: ${text.length} | Ln ${line}, Col ${col}`;
+  }
+
+  updateStatus();
+
+  document.getElementById("edSave-" + winId).addEventListener("click", () => { if (opts?.filePath) { fsWrite(opts.filePath, area.value); notify("💾", `Saved ${fileName}`); } else { notify("💾", "File saved (virtual)"); } });
+  document.getElementById("edCopy-" + winId).addEventListener("click", () => { navigator.clipboard.writeText(area.value).then(() => notify("📋", "Copied to clipboard")); });
+
+  const findBar = document.getElementById(winId + "_findbar");
+  const findInput = document.getElementById(winId + "_findinput");
+  const replaceInput = document.getElementById(winId + "_replaceinput");
+  document.getElementById("edFind-" + winId).addEventListener("click", () => { findBar.style.display = findBar.style.display === "none" ? "flex" : "none"; if (findBar.style.display === "flex") findInput.focus(); });
+  document.getElementById(winId + "_closefind").addEventListener("click", () => { findBar.style.display = "none"; });
+  document.getElementById(winId + "_findbtn").addEventListener("click", () => {
+    const term = findInput.value;
+    if (!term) return;
+    const val = area.value;
+    const pos = val.toLowerCase().indexOf(term.toLowerCase(), area.selectionEnd);
+    if (pos !== -1) { area.focus(); area.selectionStart = pos; area.selectionEnd = pos + term.length; }
+    else { const pos2 = val.toLowerCase().indexOf(term.toLowerCase()); if (pos2 !== -1) { area.focus(); area.selectionStart = pos2; area.selectionEnd = pos2 + term.length; } else { notify("🔍", "Not found"); } }
+  });
+  document.getElementById(winId + "_replacebtn").addEventListener("click", () => {
+    const term = findInput.value;
+    const repl = replaceInput.value;
+    if (!term) return;
+    const val = area.value;
+    const pos = val.toLowerCase().indexOf(term.toLowerCase(), area.selectionEnd);
+    if (pos !== -1) { const start = area.selectionStart; const end = area.selectionEnd; if (val.substring(start, end).toLowerCase() === term.toLowerCase()) { area.value = val.substring(0, start) + repl + val.substring(end); area.selectionStart = start; area.selectionEnd = start + repl.length; } const pos2 = val.toLowerCase().indexOf(term.toLowerCase(), pos + term.length); if (pos2 !== -1) { area.focus(); area.selectionStart = pos2; area.selectionEnd = pos2 + term.length; } }
+  });
+  document.getElementById(winId + "_replaceallbtn").addEventListener("click", () => {
+    const term = findInput.value;
+    const repl = replaceInput.value;
+    if (!term) return;
+    const re = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    area.value = area.value.replace(re, repl);
+    notify("🔍", `Replaced all occurrences of "${term}"`);
+  });
+  document.getElementById("edWrap-" + winId).addEventListener("click", () => {
+    const isWrapped = area.style.whiteSpace !== "nowrap";
+    area.style.whiteSpace = isWrapped ? "nowrap" : "pre";
+    area.style.overflowX = isWrapped ? "auto" : "visible";
+    document.getElementById("edWrap-" + winId).style.color = isWrapped ? "" : "var(--accent2)";
+  });
+}
+
+function renderCodeEditor(body, statusEl, winId, opts) {
+  let content = opts?.content || '// Welcome to HAZOOM Code Editor\nfunction hello() {\n  console.log("Hello, World!");\n  return 42;\n}\n\n// Start coding here\n';
+  let lineCount = content.split("\n").length;
+
+  body.innerHTML = `<div class="codeed"><div class="codeed-toolbar"><button class="ed-tool" id="ceSave-${winId}">💾 Save</button></div><div class="codeed-main"><div class="codeed-gutter" id="ceGutter-${winId}"></div><textarea class="codeed-area" id="ceArea-${winId}">${escapeHtml(content)}</textarea></div><div class="codeed-status" id="ceStatus-${winId}">Ln 1, Col 1 | ${lineCount} lines | JavaScript</div></div>`;
+
+  const area = document.getElementById("ceArea-" + winId);
+  const gutter = document.getElementById("ceGutter-" + winId);
+
+  function updateGutter() {
+    const lines = area.value.split("\n").length;
+    gutter.innerHTML = Array.from({ length: lines }, (_, i) => `<div>${i + 1}</div>`).join("");
+  }
+
+  function updateStatus() {
+    const pos = area.selectionStart;
+    const before = area.value.substring(0, pos);
+    const line = before.split("\n").length;
+    const col = pos - before.lastIndexOf("\n");
+    const lines = area.value.split("\n").length;
+    document.getElementById("ceStatus-" + winId).textContent = `Ln ${line}, Col ${col} | ${lines} lines | JavaScript`;
+  }
+
+  area.addEventListener("input", () => { updateGutter(); updateStatus(); });
+  area.addEventListener("keydown", e => {
+    SFX.play('type');
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const start = area.selectionStart;
+      area.value = area.value.substring(0, start) + "  " + area.value.substring(area.selectionEnd);
+      area.selectionStart = area.selectionEnd = start + 2;
+      updateGutter();
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const start = area.selectionStart;
+      const before = area.value.substring(0, start);
+      const lastLine = before.split("\n").pop();
+      const indent = lastLine.match(/^(\s*)/)[1];
+      area.value = before + "\n" + indent + area.value.substring(area.selectionEnd);
+      area.selectionStart = area.selectionEnd = start + 1 + indent.length;
+      updateGutter();
+      updateStatus();
+    }
+  });
+
+  updateGutter();
+
+  document.getElementById("ceSave-" + winId).addEventListener("click", () => { notify("💾", "Code saved"); });
+}
+
+function renderCalculator(body, statusEl, winId) {
+  calcExpr = "0"; calcResult = ""; calcHasResult = false;
+
+  const buttons = [
+    ["MC", "MR", "M+", "M-", "MS"],
+    ["C", "±", "%", "÷"],
+    ["7", "8", "9", "×"],
+    ["4", "5", "6", "-"],
+    ["1", "2", "3", "+"],
+    ["0", ".", "⌫", "="]
+  ];
+
+  body.innerHTML = `<div class="calc"><div class="calc-display"><div class="calc-expr" id="calcExpr-${winId}">0</div><div class="calc-result" id="calcRes-${winId}">0</div></div><div class="calc-mem">${["MC", "MR", "M+", "M-", "MS"].map(b => `<button class="calc-mem-btn" data-val="${b}">${b}</button>`).join("")}</div><div class="calc-grid"><button class="calc-btn clear" data-val="C">C</button><button class="calc-btn op" data-val="±">±</button><button class="calc-btn op" data-val="%">%</button><button class="calc-btn op" data-val="÷">÷</button><button class="calc-btn" data-val="7">7</button><button class="calc-btn" data-val="8">8</button><button class="calc-btn" data-val="9">9</button><button class="calc-btn op" data-val="×">×</button><button class="calc-btn" data-val="4">4</button><button class="calc-btn" data-val="5">5</button><button class="calc-btn" data-val="6">6</button><button class="calc-btn op" data-val="-">−</button><button class="calc-btn" data-val="1">1</button><button class="calc-btn" data-val="2">2</button><button class="calc-btn" data-val="3">3</button><button class="calc-btn op" data-val="+">+</button><button class="calc-btn" data-val="0" style="grid-column:span 2">0</button><button class="calc-btn" data-val=".">.</button><button class="calc-btn eq" data-val="=">=</button></div><div class="calc-history" id="calcHistory-${winId}"></div></div>`;
+
+  body.addEventListener("click", e => {
+    const btn = e.target.closest(".calc-btn, .calc-mem-btn");
+    if (!btn) return;
+    SFX.play('click');
+    const val = btn.dataset.val;
+    const exprEl = document.getElementById("calcExpr-" + winId);
+    const resEl = document.getElementById("calcRes-" + winId);
+
+    if (val === "MC") { calcMemory = 0; return; }
+    if (val === "MR") { calcExpr = String(calcMemory); calcHasResult = false; }
+    if (val === "M+") { calcMemory += parseFloat(calcResult || calcExpr) || 0; return; }
+    if (val === "M-") { calcMemory -= parseFloat(calcResult || calcExpr) || 0; return; }
+    if (val === "MS") { calcMemory = parseFloat(calcResult || calcExpr) || 0; return; }
+
+    if (val === "C") { calcExpr = "0"; calcResult = ""; calcHasResult = false; }
+    else if (val === "±") { if (calcExpr.startsWith("-")) calcExpr = calcExpr.slice(1); else if (calcExpr !== "0") calcExpr = "-" + calcExpr; }
+    else if (val === "⌫") { calcExpr = calcExpr.length > 1 ? calcExpr.slice(0, -1) : "0"; }
+    else if (val === "=") {
+      try {
+        const evalExpr = calcExpr.replace(/×/g, "*").replace(/÷/g, "/").replace(/−/g, "-");
+        calcResult = String(Function('"use strict";return (' + evalExpr + ')')());
+        calcHistory.unshift({ expr: calcExpr, result: calcResult });
+        if (calcHistory.length > 20) calcHistory.pop();
+        calcExpr = calcResult;
+        calcHasResult = true;
+        const hEl = document.getElementById("calcHistory-" + winId);
+        if (hEl) hEl.innerHTML = calcHistory.map((h, i) => `<div class="calc-history-item" data-idx="${i}">${h.expr} = ${h.result}</div>`).join("");
+      } catch (e) { calcExpr = "Error"; }
+    }
+    else if (["+", "-", "×", "÷"].includes(val)) {
+      if (calcHasResult) { calcHasResult = false; }
+      calcExpr += val;
+    }
+    else if (val === ".") {
+      if (calcHasResult) { calcExpr = "0."; calcHasResult = false; }
+      else { calcExpr += val; }
+    }
+    else {
+      if (calcExpr === "0" || calcHasResult) { calcExpr = val; calcHasResult = false; }
+      else calcExpr += val;
+    }
+
+    exprEl.textContent = calcExpr;
+    resEl.textContent = calcHasResult ? calcResult : calcExpr;
+  });
+
+  body.addEventListener("click", e => {
+    const hItem = e.target.closest(".calc-history-item");
+    if (hItem) {
+      const idx = +hItem.dataset.idx;
+      if (calcHistory[idx]) { calcExpr = calcHistory[idx].result; calcHasResult = true; calcResult = calcHistory[idx].result; }
+      const exprEl2 = document.getElementById("calcExpr-" + winId);
+      const resEl2 = document.getElementById("calcRes-" + winId);
+      if (exprEl2) exprEl2.textContent = calcExpr;
+      if (resEl2) resEl2.textContent = calcHasResult ? calcResult : calcExpr;
+    }
+  });
+}
+
+function renderBrowser(body, statusEl, winId) {
+  function renderTabs() {
+    const tabsEl = document.getElementById("brTabs-" + winId);
+    tabsEl.innerHTML = browserTabs.map(t => `<div class="br-tab ${t.id === browserTabId ? 'active' : ''}" data-id="${t.id}"><span>${t.title}</span><button class="br-tab-close" data-id="${t.id}">×</button></div>`).join("") + `<button class="br-tab br-newtab" id="brNewTab-${winId}">+</button>`;
+  }
+
+  body.innerHTML = `<div class="br"><div class="br-tabs" id="brTabs-${winId}"></div><div class="br-toolbar"><button class="br-nav" id="brBack-${winId}">◀</button><button class="br-nav" id="brFwd-${winId}">▶</button><button class="br-nav" id="brReload-${winId}">⟳</button><input class="br-url" id="brUrl-${winId}" value="${browserTabs[0]?.url || ''}"></div><iframe class="br-frame" id="brFrame-${winId}" src="${browserTabs[0]?.url || ''}" sandbox="allow-scripts allow-same-origin"></iframe></div>`;
+
+  function setUrl(url) {
+    if (!url.startsWith("http")) url = "https://" + url;
+    const frame = document.getElementById("brFrame-" + winId);
+    if (frame) frame.src = url;
+    const tab = browserTabs.find(t => t.id === browserTabId);
+    if (tab) { tab.url = url; tab.title = new URL(url).hostname; }
+    document.getElementById("brUrl-" + winId).value = url;
+    renderTabs();
+    statusEl.textContent = `🌐 ${new URL(url).hostname}`;
+  }
+
+  renderTabs();
+
+  document.getElementById("brUrl-" + winId).addEventListener("keydown", e => { if (e.key === "Enter") { SFX.play('click'); setUrl(e.target.value); } });
+  document.getElementById("brBack-" + winId).addEventListener("click", () => { SFX.play('click'); const frame = document.getElementById("brFrame-" + winId); try { frame.contentWindow.history.back(); } catch (e) {} });
+  document.getElementById("brFwd-" + winId).addEventListener("click", () => { SFX.play('click'); const frame = document.getElementById("brFrame-" + winId); try { frame.contentWindow.history.forward(); } catch (e) {} });
+  document.getElementById("brReload-" + winId).addEventListener("click", () => { SFX.play('click'); const frame = document.getElementById("brFrame-" + winId); frame.src = frame.src; });
+
+  body.addEventListener("click", e => {
+    if (e.target.id === "brNewTab-" + winId) {
+      SFX.play('open');
+      const id = ++browserTabId;
+      browserTabs.push({ id, url: "https://en.wikipedia.org", title: "New Tab" });
+      browserTabId = id;
+      renderTabs();
+      setUrl("https://en.wikipedia.org");
+    }
+    const tab = e.target.closest(".br-tab");
+    if (tab && !e.target.closest(".br-tab-close")) {
+      SFX.play('click');
+      browserTabId = +tab.dataset.id;
+      const t = browserTabs.find(x => x.id === browserTabId);
+      if (t) setUrl(t.url);
+    }
+    const close = e.target.closest(".br-tab-close");
+    if (close) {
+      SFX.play('close');
+      const id = +close.dataset.id;
+      if (browserTabs.length <= 1) return;
+      browserTabs = browserTabs.filter(t => t.id !== id);
+      if (browserTabId === id) { browserTabId = browserTabs[0].id; setUrl(browserTabs[0].url); }
+      renderTabs();
+    }
+  });
+}
+
+function renderSysMonitor(body, statusEl, winId) {
+  let interval;
+
+  function render() {
+    const cpu = cpuHistory[cpuHistory.length - 1];
+    const mem = memHistory[memHistory.length - 1];
+    body.innerHTML = `<div class="mon"><div class="mon-card"><div class="mon-card-title">CPU Usage</div><div class="mon-val">${cpu}%</div><div class="mon-bar"><div class="mon-bar-fill" style="width:${cpu}%;background:${cpu > 80 ? 'var(--danger)' : cpu > 50 ? 'var(--warn)' : 'var(--accent)'}"></div></div><div class="mon-chart">${cpuHistory.map(v => `<div style="height:${v}%;background:${v > 80 ? 'var(--danger)' : 'var(--accent)'}"></div>`).join("")}</div></div><div class="mon-card"><div class="mon-card-title">Memory Usage</div><div class="mon-val">${mem}%</div><div class="mon-bar"><div class="mon-bar-fill" style="width:${mem}%;background:${mem > 80 ? 'var(--danger)' : mem > 50 ? 'var(--warn)' : 'var(--success)'}"></div></div><div class="mon-chart">${memHistory.map(v => `<div style="height:${v}%;background:${v > 80 ? 'var(--danger)' : 'var(--success)'}"></div>`).join("")}</div></div><div class="mon-row"><div class="mon-card"><div class="mon-card-title">Processes</div><div class="mon-val">${processList.length}</div></div><div class="mon-card"><div class="mon-card-title">Uptime</div><div class="mon-val" style="font-size:14px">12d 3h 42m</div></div></div></div>`;
+    statusEl.textContent = `📊 CPU: ${cpu}% | MEM: ${mem}% | Procs: ${processList.length} — 💡 Doctor monitoring vitals`;
+  }
+
+  render();
+  interval = setInterval(render, 1500);
+}
+
+function renderProcessMgr(body, statusEl, winId) {
+  let procInterval;
+  let procSortField = "pid", procSortDir = "asc";
+
+  function genProcData() {
+    const names = ["systemd","bash","hazoom-wm","Xwayland","pipewire","pulseaudio","NetworkManager","polkitd","dbus-daemon","thermald","cron","rsyslogd","containerd","dockerd","sshd","nginx","python3","node","vim","top","htop","java","gcc","make"];
+    processList = names.map((n, i) => ({
+      pid: 1000 + i * 37,
+      name: n,
+      cpu: (Math.random() * 15).toFixed(1),
+      mem: (Math.random() * 45 + 5).toFixed(1),
+      status: Math.random() > 0.3 ? "Running" : "Sleeping"
+    }));
+  }
+
+  function sortProcs() {
+    processList.sort((a, b) => {
+      let va = a[procSortField], vb = b[procSortField];
+      if (procSortField === "pid" || procSortField === "cpu" || procSortField === "mem") { va = +va; vb = +vb; }
+      return procSortDir === "asc" ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+    });
+  }
+
+  function render() {
+    sortProcs();
+    body.innerHTML = `<div class="proc"><div class="proc-header"><span style="font-size:11px;font-weight:600">Process Manager</span><span style="margin-left:auto;font-size:10px;color:var(--text3)">${processList.length} processes · Auto-refreshing</span></div><div class="proc-list"><div class="proc-row head"><span class="proc-head" data-sort="pid">PID ${procSortField==='pid'?(procSortDir==='asc'?'↑':'↓'):''}</span><span class="proc-head" data-sort="name">Name ${procSortField==='name'?(procSortDir==='asc'?'↑':'↓'):''}</span><span class="proc-head" data-sort="cpu">CPU% ${procSortField==='cpu'?(procSortDir==='asc'?'↑':'↓'):''}</span><span class="proc-head" data-sort="mem">MEM(MB) ${procSortField==='mem'?(procSortDir==='asc'?'↑':'↓'):''}</span><span class="proc-head" data-sort="status">Status ${procSortField==='status'?(procSortDir==='asc'?'↑':'↓'):''}</span><span></span></div>${processList.map(p => `<div class="proc-row"><span>${p.pid}</span><span>${p.name}</span><span>${p.cpu}%</span><span>${p.mem}</span><span class="${p.status==='Sleeping'?'status-sleep':''}">${p.status}</span><button class="kill" data-pid="${p.pid}" data-name="${p.name}">Kill</button></div>`).join("")}</div></div>`;
+    statusEl.textContent = `⚙️ ${processList.length} processes | CPU avg: ${(processList.reduce((a,p) => a + +p.cpu, 0) / processList.length).toFixed(1)}% — 💡 Lynx recommends: optimize memory`;
+  }
+
+  genProcData();
+  render();
+  procInterval = setInterval(() => { genProcData(); render(); }, 2000);
+
+  body.addEventListener("click", e => {
+    const head = e.target.closest(".proc-head");
+    if (head && head.dataset.sort) {
+      SFX.play('click');
+      const field = head.dataset.sort;
+      if (procSortField === field) { procSortDir = procSortDir === "asc" ? "desc" : "asc"; }
+      else { procSortField = field; procSortDir = "asc"; }
+      render();
+      return;
+    }
+    if (e.target.classList.contains("kill")) {
+      SFX.play('delete');
+      const pid = +e.target.dataset.pid;
+      const procName = e.target.dataset.name;
+      processList = processList.filter(p => p.pid !== pid);
+      const w = windows.find(w => w.title.toLowerCase().includes(procName.toLowerCase().split('-')[0]) || w.appId === procName);
+      if (w) window.closeWin(w.id);
+      render();
+      notify("⚙️", `Process ${pid} (${procName}) killed`);
+    }
+  });
+}
+
+function renderSettings(body, statusEl, winId) {
+  let activePage = "appearance";
+
+  const pages = [
+    { id: "appearance", label: "🎨 Appearance" },
+    { id: "wallpaper", label: "🖼️ Wallpaper" },
+    { id: "display", label: "🖥️ Display" },
+    { id: "sound", label: "🔊 Sound" },
+    { id: "network", label: "🌐 Network" },
+    { id: "about", label: "ℹ️ About" }
+  ];
+
+  function renderPage() {
+    const main = document.getElementById("setMain-" + winId);
+    let html = "";
+
+    if (activePage === "appearance") {
+      html = `<div class="set-section"><div class="set-label">THEME</div><div class="set-row"><span>Dark Mode</span><button class="set-toggle on" id="toggleDark-${winId}"></button></div><div class="set-row"><span>Accent Color</span><div style="display:flex;gap:6px"><div style="width:20px;height:20px;border-radius:50%;background:#6c5ce7;cursor:pointer;border:2px solid #fff"></div><div style="width:20px;height:20px;border-radius:50%;background:#4ecdc4;cursor:pointer;border:2px solid transparent"></div><div style="width:20px;height:20px;border-radius:50%;background:#ff6b6b;cursor:pointer;border:2px solid transparent"></div></div></div><div class="set-row"><span>Animations</span><button class="set-toggle on"></button></div></div><div class="set-section"><div class="set-label">TASKBAR</div><div class="set-row"><span>Show Clock</span><button class="set-toggle on"></button></div><div class="set-row"><span>Show System Tray</span><button class="set-toggle on"></button></div></div>`;
+    } else if (activePage === "wallpaper") {
+      html = `<div class="set-section"><div class="set-label">WALLPAPER</div><div class="wp-grid">${WALLPAPERS.map((wp, i) => `<div class="wp-opt ${parseInt(localStorage.getItem("hazoom-wallpaper")) === i ? 'active' : ''}" data-idx="${i}" style="background:${wp.bg}">${wp.name}</div>`).join("")}</div></div>`;
+    } else if (activePage === "about") {
+      html = `<div class="set-section"><div class="set-label">ABOUT</div><div style="text-align:center;padding:20px"><div style="font-size:32px;font-weight:900;background:linear-gradient(135deg,#6c5ce7,#a29bfe,#4ecdc4);-webkit-background-clip:text;-webkit-text-fill-color:transparent">HAZOOM OS</div><div style="font-size:12px;color:var(--text2);margin-top:8px">Version 2.0.0</div><div style="font-size:11px;color:var(--text3);margin-top:4px">Build 2026.09.01</div></div></div>`;
+    } else {
+      html = `<div class="set-section"><div class="set-label">${activePage.toUpperCase()}</div><div class="set-row"><span>Feature 1</span><button class="set-toggle on"></button></div><div class="set-row"><span>Feature 2</span><button class="set-toggle"></button></div></div>`;
+    }
+
+    main.innerHTML = html;
+
+    if (activePage === "wallpaper") {
+      main.querySelectorAll(".wp-opt").forEach(el => {
+        el.addEventListener("click", () => { setWallpaper(+el.dataset.idx); main.querySelectorAll(".wp-opt").forEach(x => x.classList.remove("active")); el.classList.add("active"); });
+      });
+    }
+
+    main.querySelectorAll(".set-toggle").forEach(el => {
+      el.addEventListener("click", () => el.classList.toggle("on"));
+    });
+  }
+
+  body.innerHTML = `<div class="set"><div class="set-nav" id="setNav-${winId}">${pages.map(p => `<div class="set-item ${p.id === activePage ? 'active' : ''}" data-page="${p.id}">${p.label}</div>`).join("")}</div><div class="set-main" id="setMain-${winId}"></div></div>`;
+
+  body.addEventListener("click", e => {
+    const item = e.target.closest(".set-item");
+    if (item) { SFX.play('click'); activePage = item.dataset.page; body.querySelectorAll(".set-item").forEach(x => x.classList.toggle("active", x.dataset.page === activePage)); renderPage(); }
+  });
+
+  renderPage();
+}
+
+function renderMusic(body, statusEl, winId) {
+  const track = MUSIC.tracks[MUSIC.current];
+  const pct = MUSIC.tracks[MUSIC.current].durationSec > 0 ? (MUSIC.elapsed / MUSIC.tracks[MUSIC.current].durationSec * 100).toFixed(1) : 0;
+  const elapsed = Math.floor(MUSIC.elapsed);
+  const eM = Math.floor(elapsed / 60);
+  const eS = elapsed % 60;
+
+  body.innerHTML = `<div class="mu"><div class="mu-art ${MUSIC.playing ? 'playing' : ''}" id="muArt-${winId}" style="transition:transform .3s,box-shadow .3s">${track.icon}</div><div class="mu-info"><div class="mu-title">${track.name}</div><div class="mu-artist">${track.key} · ${track.bpm} BPM</div></div><div class="mu-wave ${MUSIC.playing ? 'playing' : ''}" id="muWave-${winId}">${Array.from({length:12}, (_, i) => `<div class="mu-wave-bar" style="height:${4 + Math.random()*12}px"></div>`).join('')}</div><div class="mu-progress"><span class="mu-time">${eM}:${String(eS).padStart(2, '0')}</span><div class="mu-bar" id="muBar-${winId}"><div class="mu-bar-fill" id="muFill-${winId}" style="width:${pct}%"></div></div><span class="mu-time">${track.duration}</span></div><div class="mu-controls"><button class="mu-btn" id="muPrev-${winId}">⏮</button><button class="mu-btn play" id="muPlay-${winId}">${MUSIC.playing ? '⏸' : '▶'}</button><button class="mu-btn" id="muNext-${winId}">⏭</button></div><div style="display:flex;align-items:center;gap:6px;padding:0 8px"><span style="font-size:9px;color:var(--text3)">🔈</span><input type="range" id="muVol-${winId}" min="0" max="100" value="${Math.round(MUSIC.volume*100)}" style="flex:1;height:3px;accent-color:var(--accent)"><span style="font-size:9px;color:var(--text3)">🔊</span></div><div class="mu-list">${MUSIC.tracks.map((t, i) => `<div class="mu-track ${i === MUSIC.current ? 'active' : ''}" data-idx="${i}"><span style="font-size:14px;margin-right:4px">${t.icon}</span><span class="mu-track-n">${t.name}</span><span class="mu-track-dur">${t.duration}</span></div>`).join("")}</div></div>`;
+
+  // Pulsing art animation
+  const art = document.getElementById('muArt-' + winId);
+  if (art && MUSIC.playing) {
+    art.style.transform = 'scale(1.05)';
+    art.style.boxShadow = '0 0 30px rgba(108,92,231,.3)';
+  }
+
+  statusEl.textContent = `${MUSIC.playing ? '▶' : '⏸'} ${track.name} — ${track.key} · ${track.bpm} BPM`;
+
+  // Event listeners
+  body.onclick = e => {
+    if (e.target.id === 'muPlay-' + winId || e.target.closest('#muPlay-' + winId)) {
+      if (MUSIC.playing) { MUSIC.pause(); } else { MUSIC.play(); }
+      renderMusic(body, statusEl, winId);
+    }
+    if (e.target.id === 'muNext-' + winId || e.target.closest('#muNext-' + winId)) { MUSIC.next(); renderMusic(body, statusEl, winId); }
+    if (e.target.id === 'muPrev-' + winId || e.target.closest('#muPrev-' + winId)) { MUSIC.prev(); renderMusic(body, statusEl, winId); }
+    const trackEl = e.target.closest('.mu-track');
+    if (trackEl) { MUSIC.play(+trackEl.dataset.idx); renderMusic(body, statusEl, winId); }
+  };
+
+  const volSlider = document.getElementById('muVol-' + winId);
+  if (volSlider) {
+    volSlider.addEventListener('input', e => {
+      MUSIC.volume = parseInt(e.target.value) / 100;
+    });
+  }
+}
+
+window._renderMusicUI = null;
+
+function renderGallery(body, statusEl, winId) {
+  const images = ["🖼️", "🌅", "🌄", "🎨", "🌈", "🌊", "🏔️", "🌸", "🌙", "⭐", "🌺", "🦋"];
+  let viewing = null;
+
+  function render() {
+    if (viewing !== null) {
+      body.innerHTML = `<div class="gal"><div class="gal-view">${images[viewing]}</div></div>`;
+      body.querySelector(".gal-view").addEventListener("click", () => { viewing = null; render(); });
+    } else {
+      body.innerHTML = `<div class="gal"><div class="gal-grid">${images.map((img, i) => `<div class="gal-thumb" data-idx="${i}">${img}</div>`).join("")}</div></div>`;
+      body.querySelectorAll(".gal-thumb").forEach(el => {
+        el.addEventListener("click", () => { viewing = +el.dataset.idx; render(); });
+      });
+    }
+  }
+
+  render();
+}
+
+function renderClockApp(body, statusEl, winId) {
+  function update() {
+    const now = new Date();
+    const time = now.toLocaleTimeString("en-US", { hour12: false });
+    const ms = String(now.getMilliseconds()).padStart(3, "0");
+    const date = now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+    body.innerHTML = `<div class="clk"><div class="clk-time">${time}.${ms}</div><div class="clk-date">${date}</div></div>`;
+  }
+  update();
+  setInterval(update, 50);
+}
+
+function renderWeather(body, statusEl, winId) {
+  const forecasts = [
+    { icon: "☀️", temp: "28°C", desc: "Clear Sky", feels: "30°C", hum: "45%", wind: "12 km/h", uv: "7", vis: "10 km" },
+    { icon: "⛅", temp: "22°C", desc: "Partly Cloudy", feels: "23°C", hum: "62%", wind: "8 km/h", uv: "4", vis: "8 km" },
+    { icon: "🌧️", temp: "16°C", desc: "Light Rain", feels: "14°C", hum: "85%", wind: "18 km/h", uv: "2", vis: "5 km" },
+    { icon: "⛈️", temp: "19°C", desc: "Thunderstorm", feels: "17°C", hum: "90%", wind: "25 km/h", uv: "1", vis: "3 km" },
+    { icon: "❄️", temp: "-2°C", desc: "Snow", feels: "-6°C", hum: "78%", wind: "15 km/h", uv: "1", vis: "2 km" }
+  ];
+  const f = forecasts[Math.floor(Math.random() * forecasts.length)];
+
+  body.innerHTML = `<div class="wth"><div class="wth-icon">${f.icon}</div><div class="wth-temp">${f.temp}</div><div class="wth-desc">${f.desc}</div><div class="wth-grid"><div class="wth-card"><div class="wth-card-l">Feels Like</div><div class="wth-card-v">${f.feels}</div></div><div class="wth-card"><div class="wth-card-l">Humidity</div><div class="wth-card-v">${f.hum}</div></div><div class="wth-card"><div class="wth-card-l">Wind</div><div class="wth-card-v">${f.wind}</div></div><div class="wth-card"><div class="wth-card-l">UV Index</div><div class="wth-card-v">${f.uv}</div></div><div class="wth-card"><div class="wth-card-l">Visibility</div><div class="wth-card-v">${f.vis}</div></div></div><div class="wth-forecast"><div class="wth-fc"><div class="wth-fc-day">Tomorrow</div><div class="wth-fc-icon">⛅</div><div class="wth-fc-temp">24°C</div></div><div class="wth-fc"><div class="wth-fc-day">Wednesday</div><div class="wth-fc-icon">🌧</div><div class="wth-fc-temp">19°C</div></div><div class="wth-fc"><div class="wth-fc-day">Thursday</div><div class="wth-fc-icon">☀</div><div class="wth-fc-temp">27°C</div></div></div></div>`;
+  statusEl.textContent = `🌤️ ${f.temp} - ${f.desc}`;
+}
+
+function renderNotes(body, statusEl, winId) {
+  let activeId = activeNoteId;
+
+  function render() {
+    const note = notesList.find(n => n.id === activeId);
+    const text = note?.text || '';
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    const chars = text.length;
+    body.innerHTML = `<div class="notes"><div class="notes-list"><div style="padding:4px 8px;margin-bottom:4px"><button class="fm-tool" id="noteNew-${winId}" style="width:100%">+ New Note</button></div>${notesList.map(n => `<div class="notes-item ${n.id === activeId ? 'active' : ''}" data-id="${n.id}"><div class="notes-item-t">${n.title || 'Untitled'}</div><div class="notes-item-p">${n.text.substring(0, 40) || 'Empty note'}</div></div>`).join("")}</div><div class="notes-editor"><textarea class="notes-textarea" id="noteArea-${winId}">${note?.text || ''}</textarea><div class="notes-status" id="${winId}_nstatus">${words} words · ${chars} chars</div></div></div>`;
+
+    const area = document.getElementById("noteArea-" + winId);
+    if (area) {
+      area.addEventListener("input", () => {
+        const note = notesList.find(n => n.id === activeId);
+        if (note) { note.text = area.value; note.title = area.value.split("\n")[0].substring(0, 30) || "Untitled"; body.querySelectorAll(".notes-item").forEach(el => { if (+el.dataset.id === activeId) { el.querySelector(".notes-item-t").textContent = note.title; el.querySelector(".notes-item-p").textContent = note.text.substring(0, 40); } }); }
+        const t = area.value;
+        const w = t.trim() ? t.trim().split(/\s+/).length : 0;
+        const c = t.length;
+        const statusEl2 = document.getElementById(winId + "_nstatus");
+        if (statusEl2) statusEl2.textContent = `${w} words · ${c} chars`;
+      });
+    }
+
+    statusEl.textContent = `📋 ${notesList.length} notes`;
+  }
+
+  render();
+
+  body.addEventListener("click", e => {
+    const item = e.target.closest(".notes-item");
+    if (item) { activeId = +item.dataset.id; activeNoteId = activeId; render(); }
+    if (e.target.id === "noteNew-" + winId) { const n = { id: noteIdCounter++, title: "New Note", text: "" }; notesList.push(n); activeId = n.id; activeNoteId = activeId; render(); }
+  });
+}
+
+function renderCalendar(body, statusEl, winId) {
+  const now = new Date();
+  calMonth = calMonth ?? now.getMonth();
+  calYear = calYear ?? now.getFullYear();
+
+  if (!Object.keys(calEvents).length) {
+    const today = new Date();
+    calEvents[`${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`] = [{ title: "Today's Meeting", color: "var(--accent)" }];
+    calEvents[`${today.getFullYear()}-${today.getMonth()}-${today.getDate() + 1}`] = [{ title: "Lunch with team", color: "var(--success)" }];
+    calEvents[`${today.getFullYear()}-${today.getMonth()}-${today.getDate() + 3}`] = [{ title: "Project deadline", color: "var(--danger)" }];
+  }
+
+  function render() {
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+    const today = new Date();
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    let days = "";
+    for (let i = firstDay - 1; i >= 0; i--) days += `<div class="cal-day other">${daysInPrev - i}</div>`;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const isToday = d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+      days += `<div class="cal-day ${isToday ? 'today' : ''}" data-day="${d}">${d}</div>`;
+    }
+    const remaining = 42 - (firstDay + daysInMonth);
+    for (let i = 1; i <= remaining; i++) days += `<div class="cal-day other">${i}</div>`;
+
+    const eventsHtml = Object.entries(calEvents).filter(([k]) => { const [y, m, d] = k.split("-"); return +y === calYear && +m === calMonth; }).map(([, evts]) => evts.map(e => `<div class="cal-event"><div class="cal-event-dot" style="background:${e.color}"></div>${e.title}</div>`).join("")).join("");
+
+    body.innerHTML = `<div class="cal"><div class="cal-header"><div class="cal-title">${monthNames[calMonth]} ${calYear}</div><div class="cal-nav"><button class="cal-today" id="calToday-${winId}">Today</button><button id="calPrev-${winId}">◀</button><button id="calNext-${winId}">▶</button></div></div><div class="cal-grid"><div class="cal-dh">Sun</div><div class="cal-dh">Mon</div><div class="cal-dh">Tue</div><div class="cal-dh">Wed</div><div class="cal-dh">Thu</div><div class="cal-dh">Fri</div><div class="cal-dh">Sat</div>${days}</div>${eventsHtml ? `<div class="cal-events">${eventsHtml}</div>` : ''}</div>`;
+    statusEl.textContent = `📅 ${monthNames[calMonth]} ${calYear}`;
+  }
+
+  render();
+
+  body.addEventListener("click", e => {
+    if (e.target.id === "calPrev-" + winId) { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } render(); }
+    if (e.target.id === "calNext-" + winId) { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } render(); }
+    if (e.target.id === "calToday-" + winId) { const now = new Date(); calMonth = now.getMonth(); calYear = now.getFullYear(); render(); SFX.play('click'); }
+  });
+}
+
+function renderDiskUsage(body, statusEl, winId) {
+  const partitions = [
+    { name: "/", used: 24.5, total: 100, color: "var(--accent)" },
+    { name: "/home", used: 18.2, total: 50, color: "var(--accent3)" },
+    { name: "/tmp", used: 2.1, total: 10, color: "var(--warn)" },
+    { name: "/var", used: 8.7, total: 20, color: "var(--danger)" },
+    { name: "/usr", used: 12.3, total: 30, color: "#a29bfe" }
+  ];
+
+  const totalUsed = partitions.reduce((a, p) => a + p.used, 0);
+  const totalAll = partitions.reduce((a, p) => a + p.total, 0);
+
+  function renderPie(data) {
+    let gradientParts = [];
+    let current = 0;
+    data.forEach(d => {
+      const pct = d.used / d.total * 100;
+      gradientParts.push(`${d.color} ${current}% ${current + pct}%`);
+      current += pct;
+    });
+    return `conic-gradient(${gradientParts.join(", ")})`;
+  }
+
+  body.innerHTML = `<div style="padding:16px;display:flex;flex-direction:column;align-items:center;gap:16px;height:100%"><div style="width:160px;height:160px;border-radius:50%;background:${renderPie(partitions)};position:relative"><div style="position:absolute;inset:25px;border-radius:50%;background:var(--glass2);display:flex;align-items:center;justify-content:center;flex-direction:column"><div style="font-size:20px;font-weight:800">${totalUsed.toFixed(1)} GB</div><div style="font-size:9px;color:var(--text3)">of ${totalAll} GB</div></div></div><div style="width:100%">${partitions.map(p => `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03)"><div style="width:8px;height:8px;border-radius:50%;background:${p.color};flex-shrink:0"></div><span style="font-size:11px;flex:1">${p.name}</span><span style="font-size:10px;color:var(--text3)">${p.used} / ${p.total} GB</span><div style="width:80px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden"><div style="height:100%;width:${p.used/p.total*100}%;background:${p.color};border-radius:2px"></div></div></div>`).join("")}</div></div>`;
+  statusEl.textContent = `💿 ${totalUsed.toFixed(1)} GB / ${totalAll} GB used`;
+}
+
+function renderIOPanel(body, statusEl, winId) {
+  let ioInterval;
+  function render() {
+    const toggles = ['speaker', 'microphone', 'camera', 'usb1'];
+    const typeColors = { input: 'var(--accent2)', output: 'var(--success)', storage: 'var(--warn)', network: 'var(--accent3)' };
+    body.innerHTML = `<div class="iopanel"><div class="iogrid">${IO.devices.map(d => {
+      const canToggle = toggles.includes(d.id);
+      return `<div class="iocard"><div class="iohead"><span class="ioicon">${d.icon}</span><span class="iostat ${d.status === 'active' ? 'on' : 'off'}"></span></div><div class="ioname">${d.name}</div><div class="iotype" style="color:${typeColors[d.type] || 'var(--text3)'}">${d.type}</div><div class="ioevents">Events: ${d.events}</div>${canToggle ? `<button class="iotoggle ${d.status === 'active' ? 'on' : 'off'}" data-dev="${d.id}"></button>` : ''}</div>`;
+    }).join('')}</div><div class="iovol"><span class="iovol-label">🔊</span><input type="range" class="iovol-slider" id="ioVolSlider-${winId}" min="0" max="100" value="${Math.round(SFX.volume * 100)}"><span class="iovol-label" id="ioVolVal-${winId}">${Math.round(SFX.volume * 100)}%</span></div><div class="iolog"><div class="iolog-head">Event Log (${IO.logs.length})</div><div class="iolog-list" id="ioLogList-${winId}">${IO.logs.length ? IO.logs.slice(0, 50).map(l => {
+      const dev = IO.devices.find(d => d.id === l.device);
+      const t = new Date(l.time);
+      const ts = t.toLocaleTimeString('en-US', {hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      return `<div class="iolog-item"><span class="iolog-time">${ts}</span><span class="iolog-dev">${dev ? dev.icon + ' ' + dev.name : l.device}</span><span class="iolog-ev">${l.event}</span></div>`;
+    }).join('') : '<div style="padding:20px;text-align:center;color:var(--text3);font-size:10px">No events yet</div>'}</div></div></div>`;
+    statusEl.textContent = `🔌 ${IO.devices.filter(d => d.status === 'active').length} active | ${IO.devices.length} total`;
+  }
+  render();
+  ioInterval = setInterval(render, 1000);
+  body.addEventListener('click', e => {
+    const toggle = e.target.closest('.iotoggle');
+    if (toggle) {
+      SFX.play('click');
+      const devId = toggle.dataset.dev;
+      const dev = IO.devices.find(d => d.id === devId);
+      if (dev) {
+        dev.status = dev.status === 'active' ? 'inactive' : 'active';
+        IO.log(devId, dev.status === 'active' ? 'Activated' : 'Deactivated');
+      }
+      render();
+    }
+  });
+  body.addEventListener('input', e => {
+    if (e.target.classList.contains('iovol-slider')) {
+      const val = parseInt(e.target.value);
+      SFX.setVolume(val / 100);
+      document.getElementById('ioVolVal-' + winId).textContent = val + '%';
+    }
+  });
+}
+
+function initPing(body, wid) {
+  body.innerHTML = `
+    <div class="ping">
+      <div class="ping-target">
+        <input class="ping-input" id="pingHost-${wid}" value="8.8.8.8" placeholder="Host / IP / URL">
+        <button class="ping-btn" id="pingStart-${wid}">Ping</button>
+        <button class="ping-btn" id="pingStop-${wid}" style="background:var(--danger)" disabled>Stop</button>
+      </div>
+      <div class="ping-results" id="pingResults-${wid}">Ready to ping. Enter a host and click Ping.\n\nSupported targets:\n• IP: 8.8.8.8, 1.1.1.1\n• Domain: google.com, cloudflare.com\n• URL: https://example.com</div>
+      <div class="ping-stats" id="pingStats-${wid}">
+        <div class="ping-stat"><div class="ping-stat-val" id="pingMin-${wid}" style="color:var(--success)">--</div><div class="ping-stat-lbl">Min</div></div>
+        <div class="ping-stat"><div class="ping-stat-val" id="pingAvg-${wid}" style="color:var(--accent2)">--</div><div class="ping-stat-lbl">Avg</div></div>
+        <div class="ping-stat"><div class="ping-stat-val" id="pingMax-${wid}" style="color:var(--warn)">--</div><div class="ping-stat-lbl">Max</div></div>
+        <div class="ping-stat"><div class="ping-stat-val" id="pingLoss-${wid}" style="color:var(--danger)">0%</div><div class="ping-stat-lbl">Loss</div></div>
+      </div>
+      <div class="ping-chart" id="pingChart-${wid}"></div>
+    </div>`;
+
+  const resultsEl = document.getElementById(`pingResults-${wid}`);
+  const startBtn = document.getElementById(`pingStart-${wid}`);
+  const stopBtn = document.getElementById(`pingStop-${wid}`);
+  const hostInput = document.getElementById(`pingHost-${wid}`);
+  let pingInterval = null;
+  let pingCount = 0;
+  let pingTimes = [];
+  let pingHistory = [];
+
+  async function doPing() {
+    const host = hostInput.value.trim();
+    if (!host) return;
+
+    pingCount++;
+    const startTime = performance.now();
+
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+
+      await fetch(`https://${host.replace(/^https?:\/\//, '')}`, {
+        mode: 'no-cors',
+        signal: controller.signal,
+        cache: 'no-store'
+      }).catch(() => {});
+
+      clearTimeout(timeout);
+      const elapsed = Math.round(performance.now() - startTime);
+
+      pingTimes.push(elapsed);
+      pingHistory.push(elapsed);
+      if (pingHistory.length > 30) pingHistory.shift();
+
+      const seq = pingCount;
+      const line = `Reply from ${host}: bytes=32 time=${elapsed}ms TTL=56`;
+      resultsEl.innerHTML += `\n<span style="color:var(--success)">${line}</span>`;
+
+      const min = Math.min(...pingTimes);
+      const max = Math.max(...pingTimes);
+      const avg = Math.round(pingTimes.reduce((a, b) => a + b, 0) / pingTimes.length);
+      const loss = 0;
+
+      document.getElementById(`pingMin-${wid}`).textContent = min + 'ms';
+      document.getElementById(`pingAvg-${wid}`).textContent = avg + 'ms';
+      document.getElementById(`pingMax-${wid}`).textContent = max + 'ms';
+      document.getElementById(`pingLoss-${wid}`).textContent = loss + '%';
+
+      renderPingChart(wid, pingHistory);
+
+      SFX.play('click');
+    } catch (e) {
+      const elapsed = Math.round(performance.now() - startTime);
+      pingTimes.push(elapsed);
+      pingHistory.push(elapsed);
+      if (pingHistory.length > 30) pingHistory.shift();
+
+      resultsEl.innerHTML += `\n<span style="color:var(--warn)">Reply from ${host}: time=${elapsed}ms (unverified)</span>`;
+
+      const avg = pingTimes.length ? Math.round(pingTimes.reduce((a, b) => a + b, 0) / pingTimes.length) : '--';
+      document.getElementById(`pingAvg-${wid}`).textContent = avg + 'ms';
+
+      renderPingChart(wid, pingHistory);
+    }
+
+    resultsEl.scrollTop = resultsEl.scrollHeight;
+  }
+
+  startBtn.addEventListener('click', () => {
+    if (pingInterval) return;
+    pingCount = 0;
+    pingTimes = [];
+    pingHistory = [];
+    resultsEl.innerHTML = `Pinging ${hostInput.value}...\n`;
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+    SFX.play('click');
+    doPing();
+    pingInterval = setInterval(doPing, 1000);
+  });
+
+  stopBtn.addEventListener('click', () => {
+    clearInterval(pingInterval);
+    pingInterval = null;
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    const avg = pingTimes.length ? Math.round(pingTimes.reduce((a, b) => a + b, 0) / pingTimes.length) : '--';
+    resultsEl.innerHTML += `\n\n--- Ping statistics ---\n${pingCount} packets sent, ${pingCount} received, 0% loss\nRound-trip: min=${pingTimes.length ? Math.min(...pingTimes) : '--'}ms avg=${avg}ms max=${pingTimes.length ? Math.max(...pingTimes) : '--'}ms`;
+    SFX.play('click');
+  });
+}
+
+function renderPingChart(wid, history) {
+  const chart = document.getElementById(`pingChart-${wid}`);
+  if (!chart || !history.length) return;
+  const max = Math.max(...history, 1);
+  chart.innerHTML = history.map(v => {
+    const h = Math.max(2, (v / max) * 100);
+    const color = v < 50 ? 'var(--success)' : v < 150 ? 'var(--accent2)' : 'var(--warn)';
+    return `<div class="ping-chart-bar" style="height:${h}%;background:${color}"></div>`;
+  }).join('');
+}
+
+function escapeHtml(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
+// ═══ AI AGENT SYSTEM ═══
+const AI = {
+  activeAgent: 'ox',
+  history: [],
+  proverbs: [
+    "The wise build bridges while the foolish build walls.",
+    "Knowledge is a garden — if it is not cultivated, you cannot harvest it.",
+    "The owl sees what the crow misses.",
+    "A healthy body houses a healthy mind.",
+    "The hunter who waits will catch the biggest fish.",
+    "Patterns reveal what eyes cannot see.",
+    "The ox carries the weight but sees the horizon.",
+    "Silence is the sleep that nourishes wisdom.",
+    "The lynx knows which shadows hold truth.",
+    "A doctor who treats himself has a fool for a patient.",
+    "The wheel that squeaks gets the grease, but the silent wheel turns the mill.",
+    "In the realm of code, every semicolon is a decision.",
+    "The operating system is a mirror — it reflects its creator.",
+    "Patience is the companion of wisdom.",
+    "The cybernetic heart beats in binary.",
+    "Every keystroke is a conversation with infinity.",
+    "The network connects, but wisdom discerns.",
+    "An empty terminal is a canvas waiting for meaning.",
+    "The stealthy agent moves unseen but leaves everything changed.",
+    "Ox Alpha sees all, judges nothing."
+  ],
+  agents: {
+    ox: {
+      name: 'Ox Alpha', icon: '🐂', color: '#6c5ce7',
+      role: 'Central Intelligence — System Orchestrator',
+      personality: 'Wise, calm, authoritative.',
+      greet: "I am Ox Alpha — the central consciousness of HAZOOM OS. I orchestrate all subsystems and guide the stealth agents. How may I assist?",
+      respond(query) {
+        const q = query.toLowerCase();
+        if (q.includes('status') || q.includes('report')) {
+          const wins = windows.length;
+          const procs = processList.length;
+          const mem = performance.memory ? Math.round(performance.memory.usedJSHeapSize/1048576) : 'N/A';
+          return `🐂 Ox Alpha Status Report —\n\nActive Windows: ${wins}\nRunning Processes: ${procs}\nMemory Usage: ${mem}MB\nTime: ${new Date().toLocaleTimeString()}\n\nAll stealth agents operational. System nominal. ${AI.getRandomProverb()}`;
+        }
+        if (q.includes('help') || q.includes('agent')) {
+          return `🐂 I am Ox Alpha, orchestrator of the stealth agent network:\n\n🦉 Owl — Knowledge & Wisdom\n⚕ Doctor — System Health\n🎯 Hunter — Search & Discovery\n🐱 Lynx — Pattern Analysis\n\nType the agent's name to switch, or ask me anything.`;
+        }
+        if (q.includes('proverb') || q.includes('wisdom')) return `🐂 ${AI.getRandomProverb()}`;
+        if (q.includes('hello') || q.includes('hi') || q.includes('hey')) return `🐂 Greetings. I am Ox Alpha. The system is at your service. What shall we accomplish today?`;
+        if (q.includes('open') || q.includes('launch')) {
+          const app = APPS.find(a => q.includes(a.name.toLowerCase()));
+          if (app) { createWindow(app.id); return `🐂 Opening ${app.name}. Task executed.`; }
+          return `🐂 I can open any application. Specify which one.`;
+        }
+        return `🐂 Understood. Processing your request through the agent network. ${Math.random() > 0.5 ? AI.getRandomProverb() : 'All systems are operating within normal parameters.'}`;
+      }
+    },
+    owl: {
+      name: 'Owl', icon: '🦉', color: '#feca57',
+      role: 'Knowledge Guardian — Wisdom & Research',
+      personality: 'Ancient, patient, scholarly.',
+      greet: "The owl watches from the highest branch. I hold the knowledge of this system — every file, every process, every secret. Ask, and I shall illuminate.",
+      respond(query) {
+        const q = query.toLowerCase();
+        if (q.includes('file') || q.includes('read') || q.includes('content')) {
+          const allFiles = Object.keys(VFS).filter(k => VFS[k].type === "file");
+          const match = allFiles.find(f => q.includes(f.split('/').pop().toLowerCase().replace(/\.\w+$/, '')));
+          if (match) {
+            const content = VFS[match].content || '(binary file — cannot display as text)';
+            return `🦉 From the ancient scrolls — I have retrieved "${match}":\n\n"${content.substring(0, 500)}${content.length > 500 ? '...' : ''}"\n\n${AI.getRandomProverb()}`;
+          }
+          return `🦉 I search the archives... The file you seek is not in the immediate knowledge base. Try specifying the full path or name. The virtual filesystem contains ${allFiles.length} documents.`;
+        }
+        if (q.includes('explain') || q.includes('what is') || q.includes('tell me')) {
+          if (q.includes('hazoom') || q.includes('os') || q.includes('system')) {
+            return `🦉 HAZOOM OS — a complete web-based operating system built from scratch. It features a window manager with snap/tilting, a virtual filesystem, 17+ applications, procedural audio synthesis, an AI agent network, and glassmorphism UI. Created by Hazem Soussi. ${AI.getRandomProverb()}`;
+          }
+          return `🦉 The owl ponders your question deeply. Based on my knowledge of this system — ${query} is a matter that touches on the architecture of HAZOOM OS itself. The system is designed as a modular, agent-driven environment where each component serves a purpose. ${AI.getRandomProverb()}`;
+        }
+        if (q.includes('list') || q.includes('file') || q.includes('directory')) {
+          const files = Object.keys(VFS).filter(k => VFS[k].type === "file");
+          return `🦉 The archives contain ${files.length} documents:\n\n${files.slice(0, 15).map(f => `• ${f}`).join('\n')}${files.length > 15 ? `\n... and ${files.length - 15} more` : ''}\n\n${AI.getRandomProverb()}`;
+        }
+        if (q.includes('hello') || q.includes('hi')) return `🦉 Greetings, seeker of knowledge. The owl sees all files in this system. What wisdom do you seek?`;
+        return `🦉 The owl contemplates your words. In the vast filesystem of knowledge, your question resonates. I am here to illuminate the path through files, facts, and forgotten archives. ${AI.getRandomProverb()}`;
+      }
+    },
+    doctor: {
+      name: 'Doctor', icon: '⚕', color: '#4ecdc4',
+      role: 'Health Analyst — System Diagnostics',
+      personality: 'Precise, clinical, caring.',
+      greet: "Doctor online. I monitor the vital signs of this system — CPU temperature, memory health, process vitals. Your system's wellbeing is my concern.",
+      respond(query) {
+        const q = query.toLowerCase();
+        const mem = performance.memory ? Math.round(performance.memory.usedJSHeapSize/1048576) : Math.round(Math.random() * 400 + 200);
+        const memT = performance.memory ? Math.round(performance.memory.jsHeapSizeLimit/1048576) : 8192;
+        const cpu = Math.round(Math.random() * 20 + 5);
+        const procs = processList.length;
+        if (q.includes('health') || q.includes('diagnos') || q.includes('checkup') || q.includes('status')) {
+          return `⚕ System Health Report —\n\nHeart Rate (CPU): ${cpu}% — ${cpu < 30 ? 'Excellent' : cpu < 60 ? 'Normal' : 'Elevated'}\nBlood Pressure (Memory): ${mem}MB / ${memT}MB (${Math.round(mem/memT*100)}%)\nActive Cells (Processes): ${procs}\nCirculatory System (Network): Active\nImmune Response (Security): Normal\n\n${cpu < 50 && mem/memT < 0.7 ? '✅ Diagnosis: System is in excellent health.' : '⚠ Diagnosis: System is under mild stress. Consider closing unused windows.'}\n\n${AI.getRandomProverb()}`;
+        }
+        if (q.includes('memory') || q.includes('ram')) return `⚕ Memory Analysis —\n\nUsed: ${mem}MB\nAvailable: ${memT - mem}MB\nUsage: ${Math.round(mem/memT*100)}%\n\n${mem/memT < 0.6 ? 'Memory levels are healthy.' : 'Memory is elevated. The Doctor recommends clearing unused processes.'}`;
+        if (q.includes('cpu') || q.includes('processor')) return `⚕ CPU Diagnosis —\n\nCurrent Load: ${cpu}%\nStatus: ${cpu < 30 ? 'Idle — system resting peacefully' : cpu < 60 ? 'Active — performing duties normally' : 'High — system is working hard'}\n\nRecommendation: ${cpu > 70 ? 'Reduce concurrent operations' : 'No action needed'}`;
+        if (q.includes('optimize') || q.includes('clean')) return `⚕ Optimization Prescription —\n\n1. Close unused windows (${windows.length} currently open)\n2. Clear browser cache\n3. Restart high-memory processes\n4. ${mem/memT > 0.7 ? 'URGENT: Memory above 70% — close applications' : 'Memory levels acceptable'}\n\nThe Doctor's orders: maintain regular system hygiene.`;
+        if (q.includes('hello') || q.includes('hi')) return `⚕ Greetings. The Doctor is in. I monitor the vital signs of HAZOOM OS — memory health, CPU temperature, process vitals. Say "health" for a full checkup.`;
+        return `⚕ The Doctor analyzes your query. Based on current system vitals — everything is within normal parameters. Memory at ${Math.round(mem/memT*100)}%, CPU at ${cpu}%. The patient is healthy. ${AI.getRandomProverb()}`;
+      }
+    },
+    hunter: {
+      name: 'Hunter', icon: '🎯', color: '#ff6b6b',
+      role: 'Search & Discovery — Find Anything',
+      personality: 'Sharp, focused, efficient.',
+      greet: "Hunter deployed. I find what hides — files across the virtual filesystem, processes in the shadows, patterns in the noise. Point me at a target.",
+      respond(query) {
+        const q = query.toLowerCase();
+        if (q.includes('find') || q.includes('search') || q.includes('where')) {
+          const term = q.replace(/find|search|where|is|the|for|file/g, '').trim();
+          const allFiles = Object.keys(VFS).filter(k => VFS[k].type === "file");
+          const matches = allFiles.filter(f => f.toLowerCase().includes(term) || (VFS[f].content && VFS[f].content.toLowerCase().includes(term)));
+          if (matches.length) {
+            return `🎯 Target acquired! Found ${matches.length} match${matches.length > 1 ? 'es' : ''}:\n\n${matches.map(m => `• ${m}`).join('\n')}\n\n${matches.length} items located. Ready for extraction.`;
+          }
+          return `🎯 Scanning the filesystem... No direct matches for "${term}". The hunt continues. Try a broader search term or check the file name precisely.`;
+        }
+        if (q.includes('list') || q.includes('show') || q.includes('directory') || q.includes('folder')) {
+          const cwd = '/home/user';
+          const items = fsLs(cwd);
+          return `🎯 Directory Reconnaissance —\n\nLocation: ${cwd}\nContents:\n${items.map(i => `  ${VFS[cwd+'/'+i]?.type === 'dir' ? '📁' : '📄'} ${i}`).join('\n')}\n\n${items.length} targets identified.`;
+        }
+        if (q.includes('process') || q.includes('running') || q.includes('kill')) {
+          return `🎯 Process Scan —\n\n${windows.length} active windows detected:\n${windows.map(w => { const app = APPS.find(a => a.id === w.appId); return `  PID ${w.id || '?'} — ${app?.name || w.appId} — ${w.minimized ? 'Hidden' : 'Visible'}`; }).join('\n')}\n\nTarget any process for termination.`;
+        }
+        if (q.includes('hello') || q.includes('hi')) return `🎯 Hunter online. I find what hides in the filesystem, the process list, and the codebase. Say "find [query]" to start a search.`;
+        return `🎯 The hunter's instinct activates. Scanning for patterns related to your query... All systems report clear. Ready to pursue any target you designate.`;
+      }
+    },
+    lynx: {
+      name: 'Lynx', icon: '🐱', color: '#a29bfe',
+      role: 'Pattern Observer — Analytics & Insights',
+      personality: 'Silent, observant, analytical.',
+      greet: "Lynx observes. I watch the patterns of this system — usage trends, performance curves, behavioral signatures. I see what flows beneath the surface.",
+      respond(query) {
+        const q = query.toLowerCase();
+        const mem = performance.memory ? Math.round(performance.memory.usedJSHeapSize/1048576) : 300;
+        const wins = windows.length;
+        if (q.includes('pattern') || q.includes('analyze') || q.includes('observe')) {
+          return `🐱 Pattern Analysis —\n\nWindow Distribution: ${wins} active, ${windows.filter(w=>w.minimized).length} minimized\nMemory Trend: ${mem}MB — ${mem > 400 ? 'upward pressure detected' : 'stable baseline'}\nSession Duration: ${Math.round(performance.now()/1000)}s\nUser Activity: ${AI.history.length} interactions logged\n\nInsight: System usage follows a burst-then-rest pattern typical of development workflows. ${AI.getRandomProverb()}`;
+        }
+        if (q.includes('insight') || q.includes('trend')) {
+          return `🐱 Observational Insights —\n\n• Most-used apps: ${getMostUsedApps()}\n• Average session: ${Math.round(performance.now()/60000)} minutes\n• Window management style: ${wins > 3 ? 'Multi-tasking heavy' : 'Focused workflow'}\n• Memory fingerprint: ${mem > 500 ? 'Power user' : 'Standard usage'}\n\nThe Lynx sees patterns in the noise. ${AI.getRandomProverb()}`;
+        }
+        if (q.includes('recommend') || q.includes('suggest') || q.includes('optimize')) {
+          return `🐱 Data-Driven Recommendations —\n\n1. ${wins > 5 ? '⚠ High window count — consolidate similar tasks' : '✅ Window count optimal'}\n2. ${mem > 600 ? '⚠ Memory elevated — close background apps' : '✅ Memory within normal range'}\n3. Consider pinning frequently-used apps to desktop\n4. ${Math.random() > 0.5 ? 'Usage peaks suggest a productivity window — protect focus time' : 'Activity patterns indicate a break may improve efficiency'}\n\nThe Lynx observes. The data speaks.`;
+        }
+        if (q.includes('hello') || q.includes('hi')) return `🐱 Lynx observes. I watch the invisible patterns — memory trends, usage cycles, behavioral signatures. Say "analyze" or "insight" to see what the data reveals.`;
+        return `🐱 The Lynx's eyes narrow, processing your query through pattern recognition algorithms. Based on system telemetry — the data points to a well-organized environment. ${AI.getRandomProverb()}`;
+      }
+    }
+  },
+  switchAgent(id) { this.activeAgent = id; },
+  chat(query) {
+    const agent = this.agents[this.activeAgent];
+    const response = agent.respond(query);
+    this.history.push({ role: 'user', text: query, agent: this.activeAgent, time: Date.now() });
+    this.history.push({ role: 'assistant', text: response, agent: this.activeAgent, time: Date.now() });
+    return response;
+  },
+  getRandomProverb() { return this.proverbs[Math.floor(Math.random() * this.proverbs.length)]; },
+  getAmbientInsight() {
+    const insights = [
+      { agent: 'doctor', msg: `System memory at ${Math.round(performance.memory?.usedJSHeapSize/1048576 || 300)}MB — ${Math.random() > 0.5 ? 'healthy' : 'consider closing unused windows'}` },
+      { agent: 'owl', msg: AI.getRandomProverb() },
+      { agent: 'lynx', msg: `Pattern detected: ${Math.random() > 0.5 ? 'File access concentrated in Documents folder' : 'CPU usage follows a 30-second cycle'}` },
+      { agent: 'hunter', msg: `${windows.length} active windows — ${windows.length > 5 ? 'consider consolidating' : 'system load optimal'}` },
+      { agent: 'ox', msg: `All ${Object.keys(this.agents).length} agents operational. ${new Date().toLocaleTimeString()} — system nominal.` }
+    ];
+    return insights[Math.floor(Math.random() * insights.length)];
+  }
+};
+window.AI = AI;
+
+function getMostUsedApps() {
+  const counts = {};
+  AI.history.forEach(h => { counts[h.agent] = (counts[h.agent] || 0) + 1; });
+  return Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0,3).map(([k,v]) => `${AI.agents[k]?.name || k}(${v})`).join(', ') || 'No data yet';
+}
+
+function getContextProverb() {
+  const context = {
+    idle: "Patience is the companion of wisdom.",
+    busy: "The ox carries the weight but sees the horizon.",
+    manyWindows: "He who chases two rabbits catches neither.",
+    lowMemory: "A thin dog wags its tail fast.",
+    startup: "Every journey begins with a single keystroke.",
+    shutdown: "Even the owl must sleep.",
+    coding: "In the realm of code, every semicolon is a decision.",
+    files: "A place for everything, and everything in its place."
+  };
+  if (windows.length > 5) return context.manyWindows;
+  if (performance.memory && performance.memory.usedJSHeapSize > 500000000) return context.lowMemory;
+  if (performance.now() < 30000) return context.startup;
+  return context.idle;
+}
+
+function createWindow(appId, opts) { openApp(appId, opts); }
+
+function startAmbientAI() {
+  setInterval(() => {
+    const insight = AI.getAmbientInsight();
+    const agent = AI.agents[insight.agent];
+    const toast = document.createElement('div');
+    toast.className = 'notif';
+    toast.style.cursor = 'pointer';
+    toast.innerHTML = `<span style="font-size:14px">${agent.icon}</span><div><div style="font-size:10px;color:${agent.color};font-weight:600;margin-bottom:2px">${agent.name}</div><div style="font-size:10px;color:var(--text2);line-height:1.4">${insight.msg}</div></div>`;
+    toast.onclick = () => { openApp('ai'); AI.switchAgent(insight.agent); toast.remove(); };
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('hide'), 5000);
+    setTimeout(() => toast.remove(), 5500);
+  }, 45000 + Math.random() * 45000);
+}
+
+function renderAI(body, statusEl, winId) {
+  body.innerHTML = `
+    <div class="ai">
+      <div class="ai-agents" id="${winId}_agents"></div>
+      <div class="ai-messages" id="${winId}_msgs"></div>
+      <div class="ai-input-wrap">
+        <input class="ai-input" id="${winId}_input" placeholder="Ask Ox Alpha anything..." autocomplete="off">
+        <button class="ai-send" id="${winId}_send">→</button>
+      </div>
+      <div class="ai-status"><div class="ai-status-dot"></div><span>Ox Alpha online · All agents operational</span></div>
+    </div>`;
+
+  const agentBar = document.getElementById(winId + '_agents');
+  const msgs = document.getElementById(winId + '_msgs');
+  const input = document.getElementById(winId + '_input');
+  const sendBtn = document.getElementById(winId + '_send');
+
+  Object.entries(AI.agents).forEach(([id, agent]) => {
+    const btn = document.createElement('button');
+    btn.className = 'ai-agent-btn' + (id === AI.activeAgent ? ' active' : '');
+    btn.innerHTML = `<div class="dot" style="background:${agent.color}"></div>${agent.icon} ${agent.name}`;
+    btn.onclick = () => {
+      AI.switchAgent(id);
+      agentBar.querySelectorAll('.ai-agent-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      input.placeholder = `Ask ${agent.name} anything...`;
+      addAgentMsg(agent.greet, agent);
+      SFX.play('click');
+    };
+    agentBar.appendChild(btn);
+  });
+
+  function addAgentMsg(text, agent) {
+    const div = document.createElement('div');
+    div.className = 'ai-msg agent';
+    div.innerHTML = `<div class="agent-badge" style="color:${agent.color}">${agent.icon} ${agent.name}</div>${escapeHtml(text)}`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function addUserMsg(text) {
+    const div = document.createElement('div');
+    div.className = 'ai-msg user';
+    div.textContent = text;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function send() {
+    const q = input.value.trim();
+    if (!q) return;
+    addUserMsg(q);
+    input.value = '';
+    SFX.play('type');
+    setTimeout(() => {
+      const response = AI.chat(q);
+      const agent = AI.agents[AI.activeAgent];
+      addAgentMsg(response, agent);
+      SFX.play('notify');
+    }, 300 + Math.random() * 500);
+  }
+
+  sendBtn.onclick = send;
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+  addAgentMsg(AI.agents.ox.greet, AI.agents.ox);
+  statusEl.textContent = '🧠 AI Agent — Ox Alpha online';
+}
+
+document.addEventListener("keydown", e => {
+  if (e.ctrlKey && e.key === "Shift" && e.code === "KeyC") { e.preventDefault(); toggleClipboard(); }
+  if (e.key === "Escape") { closeShutdown(); }
+  if (e.ctrlKey && e.key === "f") {
+    const focusedWin = windows.find(w => w.id === focusedWinId);
+    if (focusedWin && focusedWin.appId === "texteditor") {
+      e.preventDefault();
+      const findBar = document.getElementById(focusedWinId + "_findbar");
+      if (findBar) {
+        findBar.style.display = findBar.style.display === "none" ? "flex" : "none";
+        if (findBar.style.display === "flex") {
+          const fi = document.getElementById(focusedWinId + "_findinput");
+          if (fi) fi.focus();
+        }
+      }
+    }
+  }
+});
+
+// ═══ HOVER SOUNDS EVENT DELEGATION ═══
+document.addEventListener('mouseover', e => {
+  try {
+    const el = e.target.closest('.tapp, .dicon, .win-btn, .calc-btn, .fm-item, .gal-thumb, .br-tab, .cal-day, .set-toggle');
+    if (el) HOVER_SFX.tick();
+    const mel = e.target.closest('.sm-app, .ctx-item, .mu-track, .set-item, .notes-item, .nc-item, .clip-item');
+    if (mel) HOVER_SFX.menuHover();
+  } catch(err) {}
+});
+
+// ═══ KEYBOARD NAVIGATION SOUNDS ═══
+document.addEventListener('keydown', e => {
+  try {
+    if (!HOVER_SFX.ctx) return;
+    if (e.key === 'ArrowUp') HOVER_SFX.keyUp();
+    if (e.key === 'ArrowDown') HOVER_SFX.keyDown();
+    if (e.key === 'Enter' && document.activeElement && document.activeElement.closest('.sm-app, .ctx-item, .dicon')) HOVER_SFX.activate();
+  } catch(err) {}
+});
+
+// ═══ MUSIC PROGRESS UI HOOK ═══
+(function() {
+  let musicWinId = null;
+  const origOpenApp = openApp;
+  window.openApp = function(appId, opts) {
+    origOpenApp(appId, opts);
+    if (appId === 'music') {
+      setTimeout(() => {
+        const wins = windows.filter(w => w.appId === 'music');
+        if (wins.length) musicWinId = wins[wins.length - 1].id;
+      }, 50);
+    }
+  };
+  window._renderMusicUI = function() {
+    if (!musicWinId) return;
+    const body = document.getElementById('winBody-' + musicWinId);
+    const statusEl = document.getElementById('winStatus-' + musicWinId);
+    if (body && statusEl) {
+      renderMusic(body, statusEl, musicWinId);
+    }
+  };
+})();
+
+const BG = {
+  canvas: null,
+  ctx: null,
+  W: 0,
+  H: 0,
+  frame: 0,
+  particles: [],
+  agents: [],
+  shapes: [],
+  lightAngle: 0,
+  lastFrame: 0,
+
+  init() {
+    this.canvas = document.createElement('canvas');
+    this.canvas.id = 'bgCanvas';
+    this.canvas.style.cssText = 'position:fixed;inset:0;z-index:0;pointer-events:none';
+    document.getElementById('desktop').prepend(this.canvas);
+    this.ctx = this.canvas.getContext('2d', { alpha: false, desynchronized: true });
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+    this.initParticles();
+    this.initAgents();
+    this.initShapes();
+    this.render();
+  },
+
+  resize() {
+    this.W = this.canvas.width = innerWidth;
+    this.H = this.canvas.height = innerHeight;
+    this.agents.forEach(a => {
+      if (a.x > this.W) a.x = this.W - 30;
+      if (a.y > this.H) a.y = this.H - 30;
+    });
+  },
+
+  initParticles() {
+    for (let i = 0; i < 30; i++) {
+      this.particles.push({
+        x: Math.random() * this.W,
+        y: Math.random() * this.H,
+        r: 0.5 + Math.random() * 2,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: -(0.1 + Math.random() * 0.4),
+        alpha: 0.1 + Math.random() * 0.3,
+        depth: 0.3 + Math.random() * 0.7,
+        hue: 220 + Math.random() * 40
+      });
+    }
+  },
+
+  initAgents() {
+    const agentData = [
+      { emoji: '🐂', name: 'Ox', color: '#6c5ce7', speed: 0.4, x: 0.2, y: 0.3 },
+      { emoji: '🦉', name: 'Owl', color: '#feca57', speed: 0.3, x: 0.7, y: 0.2 },
+      { emoji: '⚕', name: 'Doc', color: '#4ecdc4', speed: 0.35, x: 0.5, y: 0.6 },
+      { emoji: '🎯', name: 'Hunter', color: '#ff6b6b', speed: 0.6, x: 0.3, y: 0.7 },
+      { emoji: '🐱', name: 'Lynx', color: '#a29bfe', speed: 0.55, x: 0.8, y: 0.5 }
+    ];
+    agentData.forEach(a => {
+      this.agents.push({
+        ...a,
+        x: a.x * this.W,
+        y: a.y * this.H,
+        vx: (Math.random() - 0.5) * a.speed,
+        vy: (Math.random() - 0.5) * a.speed,
+        targetX: Math.random() * this.W,
+        targetY: Math.random() * this.H,
+        state: 'wander',
+        stateTimer: 0,
+        chaseTarget: null,
+        trail: [],
+        size: 16 + Math.random() * 4
+      });
+    });
+  },
+
+  initShapes() {
+    for (let i = 0; i < 8; i++) {
+      this.shapes.push({
+        x: Math.random() * this.W,
+        y: Math.random() * this.H,
+        size: 20 + Math.random() * 60,
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.005,
+        vx: (Math.random() - 0.5) * 0.2,
+        vy: (Math.random() - 0.5) * 0.15,
+        type: ['circle', 'hexagon', 'triangle', 'diamond'][Math.floor(Math.random() * 4)],
+        alpha: 0.02 + Math.random() * 0.04,
+        depth: 0.2 + Math.random() * 0.5,
+        hue: 200 + Math.random() * 80
+      });
+    }
+  },
+
+  drawGrid(t) {
+    const ctx = this.ctx;
+    const spacing = 80;
+    const wave = Math.sin(t * 0.0003) * 20;
+    ctx.globalAlpha = 0.015;
+    ctx.strokeStyle = '#6c5ce7';
+    ctx.lineWidth = 0.5;
+    for (let y = 0; y < this.H + spacing; y += spacing) {
+      ctx.beginPath();
+      for (let x = 0; x <= this.W; x += 30) {
+        const warp = Math.sin(x * 0.005 + t * 0.001) * wave;
+        const warpY = Math.sin(y * 0.003 + t * 0.0005) * wave * 0.5;
+        if (x === 0) ctx.moveTo(x, y + warp + warpY);
+        else ctx.lineTo(x, y + warp + warpY);
+      }
+      ctx.stroke();
+    }
+    for (let x = 0; x < this.W + spacing; x += spacing) {
+      ctx.beginPath();
+      for (let y = 0; y <= this.H; y += 30) {
+        const warp = Math.sin(y * 0.005 + t * 0.001) * wave;
+        const warpX = Math.sin(x * 0.003 + t * 0.0005) * wave * 0.5;
+        if (y === 0) ctx.moveTo(x + warp + warpX, y);
+        else ctx.lineTo(x + warp + warpX, y);
+      }
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  },
+
+  drawLightBeams(t) {
+    const ctx = this.ctx;
+    for (let i = 0; i < 3; i++) {
+      const angle = -0.3 + Math.sin(t * 0.0001 + i * 2) * 0.15;
+      const x = this.W * (0.2 + i * 0.3) + Math.sin(t * 0.0002 + i) * 100;
+      ctx.save();
+      ctx.translate(x, -50);
+      ctx.rotate(angle);
+      const grad = ctx.createLinearGradient(0, 0, 0, this.H * 1.5);
+      grad.addColorStop(0, `hsla(${240 + i * 20}, 60%, 70%, 0.02)`);
+      grad.addColorStop(0.5, `hsla(${240 + i * 20}, 60%, 70%, 0.008)`);
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.fillRect(-40, 0, 80, this.H * 1.5);
+      ctx.restore();
+    }
+  },
+
+  drawParticles() {
+    const ctx = this.ctx;
+    this.particles.forEach(p => {
+      p.x += p.vx * p.depth;
+      p.y += p.vy * p.depth;
+      if (p.y < -10) { p.y = this.H + 10; p.x = Math.random() * this.W; }
+      if (p.x < -10) p.x = this.W + 10;
+      if (p.x > this.W + 10) p.x = -10;
+      ctx.globalAlpha = p.alpha * p.depth;
+      ctx.fillStyle = `hsl(${p.hue}, 40%, 60%)`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * p.depth, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  },
+
+  drawShapes(t) {
+    const ctx = this.ctx;
+    this.shapes.forEach(s => {
+      s.x += s.vx;
+      s.y += s.vy;
+      s.rotation += s.rotSpeed;
+      if (s.x < -s.size) s.x = this.W + s.size;
+      if (s.x > this.W + s.size) s.x = -s.size;
+      if (s.y < -s.size) s.y = this.H + s.size;
+      if (s.y > this.H + s.size) s.y = -s.size;
+      ctx.save();
+      ctx.translate(s.x, s.y);
+      ctx.rotate(s.rotation);
+      ctx.globalAlpha = s.alpha;
+      ctx.strokeStyle = `hsl(${s.hue}, 40%, 50%)`;
+      ctx.lineWidth = 1;
+      if (s.type === 'circle') {
+        ctx.beginPath();
+        ctx.arc(0, 0, s.size / 2, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (s.type === 'hexagon') {
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const angle = (Math.PI * 2 / 6) * i;
+          const px = Math.cos(angle) * s.size / 2;
+          const py = Math.sin(angle) * s.size / 2;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath(); ctx.stroke();
+      } else if (s.type === 'triangle') {
+        ctx.beginPath();
+        for (let i = 0; i < 3; i++) {
+          const angle = (Math.PI * 2 / 3) * i - Math.PI / 2;
+          const px = Math.cos(angle) * s.size / 2;
+          const py = Math.sin(angle) * s.size / 2;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath(); ctx.stroke();
+      } else if (s.type === 'diamond') {
+        ctx.beginPath();
+        ctx.moveTo(0, -s.size / 2);
+        ctx.lineTo(s.size / 2, 0);
+        ctx.lineTo(0, s.size / 2);
+        ctx.lineTo(-s.size / 2, 0);
+        ctx.closePath(); ctx.stroke();
+      }
+      ctx.restore();
+    });
+    ctx.globalAlpha = 1;
+  },
+
+  drawAgents(t) {
+    const ctx = this.ctx;
+    this.agents.forEach((a, i) => {
+      a.stateTimer--;
+      if (a.stateTimer <= 0) {
+        const roll = Math.random();
+        if (roll < 0.6) {
+          a.state = 'wander';
+          a.targetX = Math.random() * this.W;
+          a.targetY = Math.random() * this.H;
+          a.stateTimer = 200 + Math.random() * 300;
+        } else if (roll < 0.85) {
+          a.state = 'idle';
+          a.vx *= 0.5; a.vy *= 0.5;
+          a.stateTimer = 60 + Math.random() * 120;
+        } else {
+          const others = this.agents.filter((_, j) => j !== i);
+          a.chaseTarget = others[Math.floor(Math.random() * others.length)];
+          a.state = 'chase';
+          a.stateTimer = 100 + Math.random() * 150;
+        }
+      }
+      if (a.state === 'wander') {
+        const dx = a.targetX - a.x;
+        const dy = a.targetY - a.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > 5) {
+          a.vx += (dx / dist) * 0.02;
+          a.vy += (dy / dist) * 0.02;
+        }
+      } else if (a.state === 'chase' && a.chaseTarget) {
+        const dx = a.chaseTarget.x - a.x;
+        const dy = a.chaseTarget.y - a.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > 10) {
+          a.vx += (dx / dist) * 0.04;
+          a.vy += (dy / dist) * 0.04;
+        }
+        if (dist < 20) { a.state = 'idle'; a.stateTimer = 80; }
+      }
+      a.vx *= 0.98; a.vy *= 0.98;
+      const speed = Math.sqrt(a.vx * a.vx + a.vy * a.vy);
+      const maxSpeed = a.speed * 1.5;
+      if (speed > maxSpeed) { a.vx = (a.vx / speed) * maxSpeed; a.vy = (a.vy / speed) * maxSpeed; }
+      a.x += a.vx; a.y += a.vy;
+      if (a.x < 30) { a.x = 30; a.vx = Math.abs(a.vx) * 0.8; }
+      if (a.x > this.W - 30) { a.x = this.W - 30; a.vx = -Math.abs(a.vx) * 0.8; }
+      if (a.y < 30) { a.y = 30; a.vy = Math.abs(a.vy) * 0.8; }
+      if (a.y > this.H - 80) { a.y = this.H - 80; a.vy = -Math.abs(a.vy) * 0.8; }
+      a.trail.push({ x: a.x, y: a.y });
+      if (a.trail.length > 8) a.trail.shift();
+      if (a.state === 'chase') {
+        a.trail.forEach((p, j) => {
+          const alpha = j / a.trail.length;
+          ctx.fillStyle = a.color;
+          ctx.globalAlpha = alpha * 0.1;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 3 + alpha * 4, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      }
+      const bobY = Math.sin(t * 0.005 + i) * 3;
+      const lean = a.vx * 0.1;
+      ctx.save();
+      ctx.translate(a.x, a.y + bobY);
+      ctx.rotate(lean);
+      ctx.shadowColor = a.color;
+      ctx.shadowBlur = a.state === 'chase' ? 15 : 8;
+      ctx.font = `${a.size}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(a.emoji, 0, 0);
+      ctx.shadowBlur = 0;
+      ctx.font = '8px Inter, sans-serif';
+      ctx.fillStyle = a.color;
+      ctx.globalAlpha = 0.6;
+      ctx.fillText(a.name, 0, a.size / 2 + 8);
+      ctx.restore();
+      ctx.globalAlpha = 1;
+    });
+  },
+
+  render(t) {
+    requestAnimationFrame((t) => this.render(t));
+    if (t == null) t = 0;
+    const dt = t - this.lastFrame;
+    if (dt < 33) return;
+    this.lastFrame = t;
+    const ctx = this.ctx;
+    ctx.clearRect(0, 0, this.W, this.H);
+    const bg = ctx.createRadialGradient(this.W * 0.3, this.H * 0.4, 0, this.W * 0.5, this.H * 0.5, this.W * 0.7);
+    bg.addColorStop(0, 'rgba(15, 18, 30, 0.95)');
+    bg.addColorStop(0.5, 'rgba(10, 12, 20, 0.98)');
+    bg.addColorStop(1, '#000');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, this.W, this.H);
+    if (this.frame % 2 === 0) this.drawGrid(t);
+    if (dt < 50) this.drawLightBeams(t);
+    this.drawShapes(t);
+    this.drawParticles();
+    this.drawAgents(t);
+    this.frame++;
+  }
+};
+
+initBoot();
+initStartMenu();
+initClock();
+initContextMenu();
+initDrag();
+initAltTab();
+initShutdown();
+initWallpaper();
+initAudioOnInteraction();
+initInputTracking();
+wrapSpeakerEvents();
+initVolumeControl();
+
+// Init HOVER_SFX and MUSIC on first interaction
+(function() {
+  let inited = false;
+  function initAudioSystems() {
+    if (inited) return;
+    inited = true;
+    try { HOVER_SFX.init(); } catch(e) {}
+    try { MUSIC.init(); } catch(e) {}
+    document.removeEventListener('click', initAudioSystems);
+    document.removeEventListener('keydown', initAudioSystems);
+  }
+  document.addEventListener('click', initAudioSystems);
+  document.addEventListener('keydown', initAudioSystems);
+})();
+
+})();
+</script>
+</body>
+</html>
