@@ -175,6 +175,33 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Inter',sans-serif;
 .br-url{flex:1;height:28px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:0 10px;color:var(--text);font-size:11px;font-family:'JetBrains Mono',monospace;outline:none;transition:border-color .2s}
 .br-url:focus{border-color:var(--accent)}
 .br-frame{flex:1;background:#fff;border:none}
+.br-bookmarks{display:flex;gap:4px;padding:4px 8px;background:rgba(0,0,0,.08);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+.br-bookmarks::-webkit-scrollbar{display:none}
+.br-bm{height:24px;padding:0 10px;border-radius:12px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);color:var(--text2);font-size:9px;font-family:'Inter',sans-serif;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:4px;transition:all .15s}
+.br-bm:hover{background:rgba(255,255,255,.08);color:var(--text);border-color:var(--accent)}
+.br-ssl{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.br-ssl.secure{color:var(--success)}
+.br-ssl.insecure{color:var(--danger)}
+.br-home{display:flex;flex-direction:column;flex:1;overflow-y:auto;padding:16px;gap:16px}
+.br-home-header{text-align:center;padding:20px 0}
+.br-home-header h2{font-size:20px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0 0 4px}
+.br-home-header p{font-size:11px;color:var(--text3);margin:0}
+.br-news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.br-news-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:all .2s}
+.br-news-card:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(108,92,231,.15)}
+.br-news-card .src{font-size:9px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.br-news-card .title{font-size:12px;color:var(--text);font-weight:600;line-height:1.4;margin-bottom:4px}
+.br-news-card .desc{font-size:10px;color:var(--text3);line-height:1.4}
+.br-news-card .time{font-size:8px;color:var(--text3);margin-top:6px;opacity:.7}
+.br-news-loading{text-align:center;padding:40px;color:var(--text3);font-size:12px}
+.br-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.br-quick-item{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;border-radius:10px;background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:all .2s;font-size:10px;color:var(--text2)}
+.br-quick-item:hover{border-color:var(--accent);color:var(--text);transform:translateY(-1px)}
+.br-quick-item .qi-icon{font-size:22px}
+.br-search{display:flex;gap:6px;margin:0 auto;max-width:400px;width:100%}
+.br-search input{flex:1;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:0 14px;color:var(--text);font-size:12px;outline:none}
+.br-search input:focus{border-color:var(--accent)}
+.br-search button{height:36px;padding:0 16px;border-radius:18px;border:none;background:var(--accent);color:#fff;font-size:12px;cursor:pointer}
 .mon{padding:12px;display:flex;flex-direction:column;gap:8px;height:100%;overflow-y:auto}
 .mon-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px}
 .mon-card-title{font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
@@ -546,7 +573,35 @@ let cpuHistory = new Array(40).fill(0), memHistory = new Array(40).fill(0);
   let calcExpr = "0", calcResult = "", calcHasResult = false, calcMemory = 0, calcHistory = [];
 let calMonth, calYear, calEvents = {};
 let notesList = [{ id: 1, title: "Note 1", text: "" }], noteIdCounter = 2, activeNoteId = 1;
-let browserTabs = [{ id: 1, url: "https://en.wikipedia.org", title: "Wikipedia" }], browserTabId = 1;
+let browserTabs = [{ id: 1, url: "home", title: "🏠 Home" }], browserTabId = 1;
+const BRAI = {
+  PROXY: location.origin + '/proxy',
+  RSS: location.origin + '/rss',
+  QUICK_SITES: [
+    { icon: '📰', name: 'BBC News', url: 'https://www.bbc.com/news' },
+    { icon: '🌍', name: 'Al Jazeera', url: 'https://www.aljazeera.com' },
+    { icon: '🇫🇷', name: 'France 24', url: 'https://www.france24.com/en/' },
+    { icon: '📰', name: 'CNN', url: 'https://www.cnn.com' },
+    { icon: '🌐', name: 'Reuters', url: 'https://www.reuters.com' },
+    { icon: '📚', name: 'Wikipedia', url: 'https://en.wikipedia.org' },
+    { icon: '💻', name: 'GitHub', url: 'https://github.com' },
+    { icon: '📖', name: 'MDN Docs', url: 'https://developer.mozilla.org' }
+  ],
+  BOOKMARKS: [
+    { icon: '📰', name: 'BBC', url: 'https://www.bbc.com/news' },
+    { icon: '🌍', name: 'Al Jazeera', url: 'https://www.aljazeera.com' },
+    { icon: '🇫🇷', name: 'France 24', url: 'https://www.france24.com/en/' },
+    { icon: '🇺🇸', name: 'CNN', url: 'https://www.cnn.com' },
+    { icon: '🌐', name: 'Reuters', url: 'https://www.reuters.com' },
+    { icon: '📚', name: 'Wikipedia', url: 'https://en.wikipedia.org' },
+    { icon: '🇩🇪', name: 'DW', url: 'https://www.dw.com/en/' },
+    { icon: '🇬🇧', name: 'Guardian', url: 'https://www.theguardian.com' },
+    { icon: '🇺🇸', name: 'NY Times', url: 'https://www.nytimes.com' },
+    { icon: '🇺🇸', name: 'NPR', url: 'https://www.npr.org' }
+  ],
+  proxyUrl(url) { return this.PROXY + '?url=' + encodeURIComponent(url); },
+  isHome(tab) { return !tab || tab.url === 'home'; }
+};
   let fmPath = "/home/user", fmSelected = null;
   let fmSortField = "name", fmSortDir = "asc", fmSearchTerm = "";
 let codeLineCount = 1;
@@ -2004,37 +2059,126 @@ function renderCalculator(body, statusEl, winId) {
 function renderBrowser(body, statusEl, winId) {
   function renderTabs() {
     const tabsEl = document.getElementById("brTabs-" + winId);
+    if (!tabsEl) return;
     tabsEl.innerHTML = browserTabs.map(t => `<div class="br-tab ${t.id === browserTabId ? 'active' : ''}" data-id="${t.id}"><span>${t.title}</span><button class="br-tab-close" data-id="${t.id}">×</button></div>`).join("") + `<button class="br-tab br-newtab" id="brNewTab-${winId}">+</button>`;
   }
 
-  body.innerHTML = `<div class="br"><div class="br-tabs" id="brTabs-${winId}"></div><div class="br-toolbar"><button class="br-nav" id="brBack-${winId}">◀</button><button class="br-nav" id="brFwd-${winId}">▶</button><button class="br-nav" id="brReload-${winId}">⟳</button><input class="br-url" id="brUrl-${winId}" value="${browserTabs[0]?.url || ''}"></div><iframe class="br-frame" id="brFrame-${winId}" src="${browserTabs[0]?.url || ''}" sandbox="allow-scripts allow-same-origin"></iframe></div>`;
+  function renderBookmarks() {
+    return `<div class="br-bookmarks">${BRAI.BOOKMARKS.map(b => `<button class="br-bm" data-url="${b.url}">${b.icon} ${b.name}</button>`).join('')}</div>`;
+  }
 
-  function setUrl(url) {
+  function renderHome() {
+    return `<div class="br-home" id="brHome-${winId}">
+      <div class="br-home-header"><h2>🐂 HAZOOM Browser</h2><p>Secure · Private · Connected</p></div>
+      <div class="br-search"><input id="brSearch-${winId}" placeholder="Search or enter URL..." value=""><button id="brSearchBtn-${winId}">Go</button></div>
+      <div class="br-quick">${BRAI.QUICK_SITES.map(s => `<div class="br-quick-item" data-url="${s.url}"><span class="qi-icon">${s.icon}</span>${s.name}</div>`).join('')}</div>
+      <div id="brNews-${winId}"><div class="br-news-loading">Loading news feeds...</div></div>
+    </div>`;
+  }
+
+  function renderFrame(url) {
+    return `<iframe class="br-frame" id="brFrame-${winId}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" src="${url}"></iframe>`;
+  }
+
+  const tab = browserTabs.find(t => t.id === browserTabId);
+  const isHome = BRAI.isHome(tab);
+
+  body.innerHTML = `<div class="br">
+    <div class="br-tabs" id="brTabs-${winId}"></div>
+    ${renderBookmarks()}
+    <div class="br-toolbar">
+      <button class="br-nav" id="brBack-${winId}">◀</button>
+      <button class="br-nav" id="brFwd-${winId}">▶</button>
+      <button class="br-nav" id="brReload-${winId}">⟳</button>
+      <button class="br-nav" id="brHomeBtn-${winId}" title="Home">⌂</button>
+      <span class="br-ssl ${isHome ? 'secure' : ''}" id="brSsl-${winId}">${isHome ? '🔒' : ''}</span>
+      <input class="br-url" id="brUrl-${winId}" value="${isHome ? '' : (tab?.url || '')}">
+    </div>
+    ${isHome ? renderHome() : renderFrame(BRAI.proxyUrl(tab.url))}
+  </div>`;
+
+  function setUrl(url, skipFrame) {
+    if (url === 'home') {
+      const t = browserTabs.find(x => x.id === browserTabId);
+      if (t) { t.url = 'home'; t.title = '🏠 Home'; }
+      renderTabs();
+      body.querySelector('.br').innerHTML = `<div class="br-tabs" id="brTabs-${winId}"></div>${renderBookmarks()}<div class="br-toolbar"><button class="br-nav" id="brBack-${winId}">◀</button><button class="br-nav" id="brFwd-${winId}">▶</button><button class="br-nav" id="brReload-${winId}">⟳</button><button class="br-nav" id="brHomeBtn-${winId}" title="Home">⌂</button><span class="br-ssl secure" id="brSsl-${winId}">🔒</span><input class="br-url" id="brUrl-${winId}" value=""></div>${renderHome()}`;
+      renderTabs();
+      bindEvents();
+      loadNews();
+      statusEl.textContent = '🌐 Home';
+      return;
+    }
     if (!url.startsWith("http")) url = "https://" + url;
+    const proxyUrl = BRAI.proxyUrl(url);
     const frame = document.getElementById("brFrame-" + winId);
-    if (frame) frame.src = url;
-    const tab = browserTabs.find(t => t.id === browserTabId);
-    if (tab) { tab.url = url; tab.title = new URL(url).hostname; }
-    document.getElementById("brUrl-" + winId).value = url;
+    if (frame && !skipFrame) frame.src = proxyUrl;
+    const t = browserTabs.find(x => x.id === browserTabId);
+    let hostname = '';
+    try { hostname = new URL(url).hostname; } catch(e) { hostname = url; }
+    if (t) { t.url = url; t.title = hostname; }
+    const urlInput = document.getElementById("brUrl-" + winId);
+    if (urlInput) urlInput.value = url;
+    const ssl = document.getElementById("brSsl-" + winId);
+    if (ssl) { ssl.textContent = url.startsWith('https') ? '🔒' : '⚠️'; ssl.className = 'br-ssl ' + (url.startsWith('https') ? 'secure' : 'insecure'); }
     renderTabs();
-    statusEl.textContent = `🌐 ${new URL(url).hostname}`;
+    statusEl.textContent = `🌐 ${hostname}`;
+  }
+
+  async function loadNews() {
+    const newsEl = document.getElementById("brNews-" + winId);
+    if (!newsEl) return;
+    try {
+      const feeds = ['bbc', 'aljazeera', 'cnn', 'guardian', 'dw'];
+      let allItems = [];
+      for (const f of feeds) {
+        try {
+          const res = await fetch(`/rss/${f}`);
+          const data = await res.json();
+          if (data.items) allItems.push(...data.items.map(i => ({ ...i, source: data.icon + ' ' + data.source })));
+        } catch(e) {}
+      }
+      allItems.sort(() => Math.random() - 0.5);
+      allItems = allItems.slice(0, 12);
+      if (allItems.length) {
+        newsEl.innerHTML = `<div class="br-news-grid">${allItems.map(item => `<div class="br-news-card" data-url="${item.link}"><div class="src">${item.source}</div><div class="title">${item.title}</div><div class="desc">${item.description.slice(0, 120)}...</div><div class="time">${item.pubDate ? new Date(item.pubDate).toLocaleDateString() : ''}</div></div>`).join('')}</div>`;
+      } else {
+        newsEl.innerHTML = '<div class="br-news-loading">No news feeds available</div>';
+      }
+    } catch(e) {
+      newsEl.innerHTML = '<div class="br-news-loading">Failed to load news</div>';
+    }
+  }
+
+  function bindEvents() {
+    const urlInput = document.getElementById("brUrl-" + winId);
+    if (urlInput) urlInput.addEventListener("keydown", e => { if (e.key === "Enter") { SFX.play('click'); setUrl(e.target.value); } });
+    const backBtn = document.getElementById("brBack-" + winId);
+    if (backBtn) backBtn.addEventListener("click", () => { SFX.play('click'); const frame = document.getElementById("brFrame-" + winId); try { frame.contentWindow.history.back(); } catch (e) {} });
+    const fwdBtn = document.getElementById("brFwd-" + winId);
+    if (fwdBtn) fwdBtn.addEventListener("click", () => { SFX.play('click'); const frame = document.getElementById("brFrame-" + winId); try { frame.contentWindow.history.forward(); } catch (e) {} });
+    const reloadBtn = document.getElementById("brReload-" + winId);
+    if (reloadBtn) reloadBtn.addEventListener("click", () => { SFX.play('click'); const frame = document.getElementById("brFrame-" + winId); if (frame) frame.src = frame.src; });
+    const homeBtn = document.getElementById("brHomeBtn-" + winId);
+    if (homeBtn) homeBtn.addEventListener("click", () => { SFX.play('click'); setUrl('home'); });
+    const searchInput = document.getElementById("brSearch-" + winId);
+    const searchBtn = document.getElementById("brSearchBtn-" + winId);
+    if (searchInput) searchInput.addEventListener("keydown", e => { if (e.key === "Enter") { SFX.play('click'); const q = e.target.value.trim(); if (q) setUrl(q.includes('.') ? (q.startsWith('http') ? q : 'https://' + q) : 'https://www.google.com/search?q=' + encodeURIComponent(q)); } });
+    if (searchBtn) searchBtn.addEventListener("click", () => { SFX.play('click'); const q = searchInput.value.trim(); if (q) setUrl(q.includes('.') ? (q.startsWith('http') ? q : 'https://' + q) : 'https://www.google.com/search?q=' + encodeURIComponent(q)); });
   }
 
   renderTabs();
-
-  document.getElementById("brUrl-" + winId).addEventListener("keydown", e => { if (e.key === "Enter") { SFX.play('click'); setUrl(e.target.value); } });
-  document.getElementById("brBack-" + winId).addEventListener("click", () => { SFX.play('click'); const frame = document.getElementById("brFrame-" + winId); try { frame.contentWindow.history.back(); } catch (e) {} });
-  document.getElementById("brFwd-" + winId).addEventListener("click", () => { SFX.play('click'); const frame = document.getElementById("brFrame-" + winId); try { frame.contentWindow.history.forward(); } catch (e) {} });
-  document.getElementById("brReload-" + winId).addEventListener("click", () => { SFX.play('click'); const frame = document.getElementById("brFrame-" + winId); frame.src = frame.src; });
+  bindEvents();
+  if (isHome) loadNews();
 
   body.addEventListener("click", e => {
     if (e.target.id === "brNewTab-" + winId) {
       SFX.play('open');
       const id = ++browserTabId;
-      browserTabs.push({ id, url: "https://en.wikipedia.org", title: "New Tab" });
+      browserTabs.push({ id, url: "home", title: "🏠 Home" });
       browserTabId = id;
       renderTabs();
-      setUrl("https://en.wikipedia.org");
+      setUrl('home');
     }
     const tab = e.target.closest(".br-tab");
     if (tab && !e.target.closest(".br-tab-close")) {
@@ -2052,6 +2196,12 @@ function renderBrowser(body, statusEl, winId) {
       if (browserTabId === id) { browserTabId = browserTabs[0].id; setUrl(browserTabs[0].url); }
       renderTabs();
     }
+    const bm = e.target.closest(".br-bm");
+    if (bm) { SFX.play('click'); setUrl(bm.dataset.url); }
+    const qi = e.target.closest(".br-quick-item");
+    if (qi) { SFX.play('click'); setUrl(qi.dataset.url); }
+    const nc = e.target.closest(".br-news-card");
+    if (nc) { SFX.play('click'); setUrl(nc.dataset.url); }
   });
 }
 
