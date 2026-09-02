@@ -2,8 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HAZOOM OS v2.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>HAZOOM OS v2.8</title>
+<meta name="theme-color" content="#6c5ce7">
+<meta name="description" content="The online of the offline — A complete web-based operating system">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%236c5ce7' width='100' height='100' rx='20'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white'>🐂</text></svg>">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HAZOOM">
 <style>
 /* ═══ HAZOOM OS v2.0 ═══ */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:wght@700;900&display=swap');
@@ -2108,13 +2115,27 @@ function renderBrowser(body, statusEl, winId) {
     if (!contentEl) return;
     brLoading = true;
     if (statusIcon) statusIcon.textContent = '⏳';
+    let html = null;
+    let fromCache = false;
+
+    // Try network first
     try {
       const proxyUrl = BRAI.proxyUrl(url);
       const res = await fetch(proxyUrl);
-      const contentType = res.headers.get('content-type') || '';
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const html = await res.text();
-      contentEl.innerHTML = `<base href="${new URL(url).origin}/" target="_blank">` + html;
+      html = await res.text();
+      // Cache for offline
+      if (OfflineEngine && OfflineEngine.cacheProxyPage) OfflineEngine.cacheProxyPage(url);
+    } catch(e) {
+      // Fallback to offline cache
+      if (OfflineEngine && OfflineEngine.getOfflinePage) {
+        const cached = await OfflineEngine.getOfflinePage(url);
+        if (cached) { html = cached.html; fromCache = true; }
+      }
+    }
+
+    if (html) {
+      contentEl.innerHTML = `<base href="${new URL(url).origin}/" target="_blank">` + (fromCache ? `<div style="background:#fff3cd;color:#856404;padding:4px 8px;font-size:9px;text-align:center;font-family:Inter,sans-serif">📡 Cached offline — content may be outdated</div>` : '') + html;
       // Rewrite all links to go through proxy
       contentEl.querySelectorAll('a[href]').forEach(a => {
         const href = a.getAttribute('href');
@@ -2135,13 +2156,13 @@ function renderBrowser(body, statusEl, winId) {
           f.setAttribute('action', 'javascript:void(0)');
         }
       });
-      if (statusIcon) statusIcon.textContent = '✓';
+      if (statusIcon) statusIcon.textContent = fromCache ? '📡' : '✓';
       setTimeout(() => { if (statusIcon) statusIcon.textContent = ''; }, 2000);
-    } catch(e) {
+    } else {
       contentEl.innerHTML = `<div style="padding:40px;text-align:center;font-family:Inter,sans-serif">
-        <div style="font-size:48px;margin-bottom:16px">⚠️</div>
-        <div style="font-size:16px;font-weight:600;color:#333;margin-bottom:8px">Page Load Failed</div>
-        <div style="font-size:12px;color:#666;margin-bottom:16px">${e.message}</div>
+        <div style="font-size:48px;margin-bottom:16px">📡</div>
+        <div style="font-size:16px;font-weight:600;color:#333;margin-bottom:8px">Offline — No Cache Available</div>
+        <div style="font-size:12px;color:#666;margin-bottom:16px">This page hasn't been cached yet. Connect to the internet to cache it for offline use.</div>
         <div style="font-size:11px;color:#999">URL: ${url}</div>
         <button onclick="this.closest('.br-content').parentElement.querySelector('#brHomeBtn-${winId}').click()" style="margin-top:16px;padding:8px 20px;border-radius:8px;border:none;background:#6c5ce7;color:#fff;cursor:pointer">Go Home</button>
       </div>`;
@@ -2189,9 +2210,12 @@ function renderBrowser(body, statusEl, winId) {
   async function loadNews() {
     const newsEl = document.getElementById("brNews-" + winId);
     if (!newsEl) return;
+    let allItems = [];
+    let fromCache = false;
+
+    // Try network first
     try {
       const feeds = ['bbc', 'aljazeera', 'cnn', 'guardian', 'dw'];
-      let allItems = [];
       for (const f of feeds) {
         try {
           const res = await fetch(`/rss/${f}`);
@@ -2199,15 +2223,25 @@ function renderBrowser(body, statusEl, winId) {
           if (data.items) allItems.push(...data.items.map(i => ({ ...i, source: data.icon + ' ' + data.source })));
         } catch(e) {}
       }
-      allItems.sort(() => Math.random() - 0.5);
-      allItems = allItems.slice(0, 12);
-      if (allItems.length) {
-        newsEl.innerHTML = `<div class="br-news-grid">${allItems.map(item => `<div class="br-news-card" data-url="${item.link}"><div class="src">${item.source}</div><div class="title">${item.title}</div><div class="desc">${item.description.slice(0, 120)}...</div><div class="time">${item.pubDate ? new Date(item.pubDate).toLocaleDateString() : ''}</div></div>`).join('')}</div>`;
-      } else {
-        newsEl.innerHTML = '<div class="br-news-loading">No news feeds available</div>';
+    } catch(e) {}
+
+    // Fallback to offline cache
+    if (allItems.length === 0 && OfflineEngine && OfflineEngine.getOfflineNews) {
+      const cached = await OfflineEngine.getOfflineNews();
+      if (cached.length) {
+        allItems = cached.map(i => ({ ...i, source: (i.source || '').replace(/^[^\s]+ /, '') }));
+        fromCache = true;
       }
-    } catch(e) {
-      newsEl.innerHTML = '<div class="br-news-loading">Failed to load news</div>';
+    }
+
+    allItems.sort(() => Math.random() - 0.5);
+    allItems = allItems.slice(0, 12);
+
+    if (allItems.length) {
+      const cacheBadge = fromCache ? '<div style="background:#fff3cd;color:#856404;padding:2px 8px;font-size:8px;text-align:center;border-radius:4px;margin-bottom:8px">📡 Cached offline</div>' : '';
+      newsEl.innerHTML = cacheBadge + `<div class="br-news-grid">${allItems.map(item => `<div class="br-news-card" data-url="${item.link}"><div class="src">${item.source}</div><div class="title">${item.title}</div><div class="desc">${item.description.slice(0, 120)}...</div><div class="time">${item.pubDate ? new Date(item.pubDate).toLocaleDateString() : ''}</div></div>`).join('')}</div>`;
+    } else {
+      newsEl.innerHTML = '<div class="br-news-loading">📡 No news available offline. Connect to cache feeds.</div>';
     }
   }
 
@@ -3443,6 +3477,144 @@ initVolumeControl();
   document.addEventListener('click', initAudioSystems);
   document.addEventListener('keydown', initAudioSystems);
 })();
+
+// === OFFLINE ENGINE — The Online of the Offline ===
+const OfflineEngine = {
+  isOnline: navigator.onLine,
+  sw: null,
+  db: null,
+
+  async init() {
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      try {
+        this.sw = await navigator.serviceWorker.register('/sw.js');
+        console.log('🔧 Service Worker registered');
+      } catch(e) { console.log('SW error:', e); }
+    }
+
+    // Init IndexedDB for offline news
+    this.initDB();
+
+    // Online/offline listeners
+    window.addEventListener('online', () => this.onOnline());
+    window.addEventListener('offline', () => this.onOffline());
+
+    // Initial state
+    this.updateIndicator();
+    if (this.isOnline) this.cacheNews();
+  },
+
+  initDB() {
+    return new Promise(resolve => {
+      const req = indexedDB.open('hazoom-offline', 1);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('news')) db.createObjectStore('news', { keyPath: 'link' });
+        if (!db.objectStoreNames.contains('pages')) db.createObjectStore('pages', { keyPath: 'url' });
+        if (!db.objectStoreNames.contains('proxy')) db.createObjectStore('proxy', { keyPath: 'url' });
+      };
+      req.onsuccess = e => { this.db = e.target.result; resolve(); };
+      req.onerror = () => resolve();
+    });
+  },
+
+  async cacheNews() {
+    if (!this.db) return;
+    try {
+      const feeds = ['bbc', 'aljazeera', 'cnn', 'guardian', 'dw'];
+      for (const f of feeds) {
+        const res = await fetch(`/rss/${f}`);
+        const data = await res.json();
+        if (data.items) {
+          const tx = this.db.transaction('news', 'readwrite');
+          const store = tx.objectStore('news');
+          data.items.forEach(item => store.put({ ...item, source: f, cachedAt: Date.now() }));
+        }
+      }
+      console.log('📰 News cached for offline');
+    } catch(e) {}
+  },
+
+  async cacheProxyPage(url) {
+    if (!this.db) return;
+    try {
+      const res = await fetch(`/proxy?url=${encodeURIComponent(url)}`);
+      const html = await res.text();
+      const tx = this.db.transaction('proxy', 'readwrite');
+      tx.objectStore('proxy').put({ url, html, cachedAt: Date.now() });
+    } catch(e) {}
+  },
+
+  async getOfflineNews() {
+    if (!this.db) return [];
+    return new Promise(resolve => {
+      const tx = this.db.transaction('news', 'readonly');
+      const store = tx.objectStore('news');
+      const req = store.getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => resolve([]);
+    });
+  },
+
+  async getOfflinePage(url) {
+    if (!this.db) return null;
+    return new Promise(resolve => {
+      const tx = this.db.transaction('proxy', 'readonly');
+      const req = tx.objectStore('proxy').get(url);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => resolve(null);
+    });
+  },
+
+  onOnline() {
+    this.isOnline = true;
+    this.updateIndicator();
+    this.cacheNews();
+    SFX.play('notify');
+    this.showToast('🟢 Back online');
+    // Notify all browser windows
+    document.querySelectorAll('.br-content').forEach(el => {
+      const btn = el.closest('.win-body')?.querySelector('#brReload-' + el.id.split('-')[1]);
+      if (btn) btn.click();
+    });
+  },
+
+  onOffline() {
+    this.isOnline = false;
+    this.updateIndicator();
+    SFX.play('warn');
+    this.showToast('🔴 You are offline — cached content available');
+  },
+
+  updateIndicator() {
+    let indicator = document.getElementById('offline-indicator');
+    if (!indicator) {
+      indicator = document.createElement('div');
+      indicator.id = 'offline-indicator';
+      indicator.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:99999;padding:4px 16px;border-radius:0 0 8px 8px;font-size:10px;font-family:Inter,sans-serif;display:none;pointer-events:none;transition:all .3s';
+      document.body.appendChild(indicator);
+    }
+    if (this.isOnline) {
+      indicator.style.display = 'none';
+    } else {
+      indicator.textContent = '📡 Offline Mode — Cached content available';
+      indicator.style.display = 'block';
+      indicator.style.background = 'rgba(255,107,107,.9)';
+      indicator.style.color = '#fff';
+    }
+  },
+
+  showToast(msg) {
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:50px;left:50%;transform:translateX(-50%);z-index:99999;padding:8px 20px;border-radius:8px;background:rgba(0,0,0,.85);color:#fff;font-size:11px;font-family:Inter,sans-serif;pointer-events:none;animation:fadeInUp .3s ease';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
+  }
+};
+
+OfflineEngine.init();
 
 })();
 </script>
