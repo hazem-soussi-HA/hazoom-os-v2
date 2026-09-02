@@ -1,0 +1,16 @@
+[Unit]
+Description=HAZOOM OS Web Operating System
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/hazoom-os
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+Environment=PORT=8888
+
+[Install]
+WantedBy=multi-user.target

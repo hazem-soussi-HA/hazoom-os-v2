@@ -20,13 +20,16 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
-      - run: npm test
-      - name: Health Check
+      - name: Start server and run tests
         run: |
           node server.js &
-          sleep 2
+          SERVER_PID=$!
+          sleep 3
+          node test.js
+          TEST_EXIT=$?
           node health.js
-          kill %1
+          kill $SERVER_PID
+          exit $TEST_EXIT
 
   build:
     needs: test
