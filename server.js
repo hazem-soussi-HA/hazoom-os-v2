@@ -470,6 +470,25 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Thumbnail proxy: /thumb?url=ENCODED_URL
+  if (url.pathname === '/thumb') {
+    const target = url.searchParams.get('url');
+    if (!target) { res.writeHead(400); res.end('Missing url'); return; }
+    try {
+      const result = await fetchURL(decodeURIComponent(target), 5000);
+      res.writeHead(200, {
+        'Content-Type': result.headers['content-type'] || 'image/jpeg',
+        'Cache-Control': 'public, max-age=86400'
+      });
+      res.end(result.body);
+    } catch(e) {
+      // Return a placeholder
+      res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
+      res.end(`<svg xmlns="http://www.w3.org/2000/svg" width="120" height="68" viewBox="0 0 120 68"><rect fill="#222" width="120" height="68" rx="6"/><text x="60" y="40" text-anchor="middle" fill="#666" font-size="12" font-family="sans-serif">🎬 No Preview</text></svg>`);
+    }
+    return;
+  }
+
   // Static files
   let fp = path.join(ROOT, url.pathname === '/' ? 'index.html' : url.pathname);
   if (!fs.existsSync(fp)) { res.writeHead(404); res.end('Not Found'); return; }
